@@ -615,20 +615,40 @@ export default function Index() {
                     </h3>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div>
-                        <label className="text-sm text-muted-foreground">
+                        <label className="text-sm text-muted-foreground mb-2 block">
                           Stamping Details
                         </label>
-                        <p className="text-foreground font-medium">
-                          {formData.brandText || "-"}
-                        </p>
+                        <select
+                          value={formData.brandText}
+                          onChange={(e) =>
+                            setFormData({
+                              ...formData,
+                              brandText: e.target.value,
+                            })
+                          }
+                          className="w-full px-3 py-2 border border-input bg-card rounded text-sm focus:outline-none focus:ring-2 focus:ring-accent"
+                        >
+                          <option value="">Select Brand</option>
+                          <option value="None">None</option>
+                          <option value="Diamond Co">Diamond Co</option>
+                          <option value="Custom">Custom</option>
+                        </select>
                       </div>
                       <div>
-                        <label className="text-sm text-muted-foreground">
+                        <label className="text-sm text-muted-foreground mb-2 block">
                           Logo File
                         </label>
-                        <p className="text-foreground font-medium">
-                          {logoFileName || "-"}
-                        </p>
+                        <div className="relative">
+                          <input
+                            type="file"
+                            accept="image/*"
+                            onChange={handleFileChange}
+                            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                          />
+                          <div className="px-3 py-2 border border-input bg-card rounded text-sm text-muted-foreground hover:bg-secondary transition-colors cursor-pointer">
+                            {logoFileName || "Choose file"}
+                          </div>
+                        </div>
                       </div>
                     </div>
                   </div>
