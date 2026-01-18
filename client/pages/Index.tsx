@@ -337,17 +337,10 @@ export default function Index() {
                       onChange={handleFileChange}
                       className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                     />
-                    <div className="px-3 py-2 border border-input bg-card rounded text-sm text-muted-foreground">
-                      {logoPreview ? "Logo selected" : "Choose file"}
+                    <div className="px-3 py-2 border border-input bg-card rounded text-sm text-muted-foreground hover:bg-secondary transition-colors cursor-pointer">
+                      {logoFileName || "Choose file"}
                     </div>
                   </div>
-                  {logoPreview && (
-                    <img
-                      src={logoPreview}
-                      alt="Logo preview"
-                      className="mt-2 h-12 object-contain"
-                    />
-                  )}
                 </div>
               </div>
             </div>
