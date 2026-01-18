@@ -32,6 +32,7 @@ export default function Index() {
     approxWeight: "",
     brandText: "",
   });
+  const [logoFileName, setLogoFileName] = useState("");
 
   const [loading, setLoading] = useState(false);
   const [logoPreview, setLogoPreview] = useState<string>("");
