@@ -51,7 +51,7 @@ export const createDesign: RequestHandler = (req, res) => {
     }
 
     const design: Design = {
-      id: uuidv4(),
+      id: generateId(),
       designNumber: designNumber || `DN-${Date.now()}`,
       style,
       goldKarat,
