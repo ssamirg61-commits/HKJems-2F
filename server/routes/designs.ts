@@ -159,8 +159,8 @@ export const exportDesigns: RequestHandler = (req, res) => {
     ];
     worksheet["!cols"] = columns;
 
-    // Generate buffer
-    const buffer = XLSX.write(workbook, { bookType: "xlsx", type: "buffer" });
+    // Generate as base64 string
+    const wbout = XLSX.write(workbook, { bookType: "xlsx", type: "base64" });
 
     // Send as download
     res.setHeader(
@@ -171,7 +171,7 @@ export const exportDesigns: RequestHandler = (req, res) => {
       "Content-Type",
       "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     );
-    res.send(buffer);
+    res.send(Buffer.from(wbout, "base64"));
   } catch (error) {
     console.error("Error exporting designs:", error);
     res.status(400).json({ error: "Failed to export designs" });
