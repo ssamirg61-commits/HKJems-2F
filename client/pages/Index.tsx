@@ -366,6 +366,181 @@ export default function Index() {
               </Button>
             </div>
           </form>
+
+          {/* Review Modal */}
+          {showReview && (
+            <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+              <div className="bg-card rounded-lg shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+                <div className="sticky top-0 bg-primary text-primary-foreground p-6 flex items-center justify-between">
+                  <h2 className="text-2xl font-bold">Review Your Details</h2>
+                  <button
+                    onClick={() => setShowReview(false)}
+                    className="hover:opacity-80 transition-opacity"
+                  >
+                    <X size={24} />
+                  </button>
+                </div>
+
+                <div className="p-6 space-y-6">
+                  {/* Design Details Section */}
+                  <div>
+                    <h3 className="font-semibold text-lg text-foreground mb-4">
+                      Design Details
+                    </h3>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div>
+                        <label className="text-sm text-muted-foreground">
+                          Design Number
+                        </label>
+                        <p className="text-foreground font-medium">
+                          {formData.designNumber || "Auto generated"}
+                        </p>
+                      </div>
+                      <div>
+                        <label className="text-sm text-muted-foreground">
+                          Style
+                        </label>
+                        <p className="text-foreground font-medium">
+                          {formData.style || "-"}
+                        </p>
+                      </div>
+                      <div>
+                        <label className="text-sm text-muted-foreground">
+                          Gold Karat
+                        </label>
+                        <p className="text-foreground font-medium">
+                          {formData.goldKarat || "-"}
+                        </p>
+                      </div>
+                      <div>
+                        <label className="text-sm text-muted-foreground">
+                          Approx Gold Weight
+                        </label>
+                        <p className="text-foreground font-medium">
+                          {formData.approxGoldWeight || "-"}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Center Stone Details Section */}
+                  <div>
+                    <h3 className="font-semibold text-lg text-foreground mb-4">
+                      Center Stone Details
+                    </h3>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div>
+                        <label className="text-sm text-muted-foreground">
+                          Stone Type
+                        </label>
+                        <p className="text-foreground font-medium">
+                          {formData.stoneType || "-"}
+                        </p>
+                      </div>
+                      <div>
+                        <label className="text-sm text-muted-foreground">
+                          Diamond Shape
+                        </label>
+                        <p className="text-foreground font-medium">
+                          {formData.diamondShape || "-"}
+                        </p>
+                      </div>
+                      <div>
+                        <label className="text-sm text-muted-foreground">
+                          Carat Weight
+                        </label>
+                        <p className="text-foreground font-medium">
+                          {formData.caratWeight || "-"}
+                        </p>
+                      </div>
+                      <div>
+                        <label className="text-sm text-muted-foreground">
+                          Clarity
+                        </label>
+                        <p className="text-foreground font-medium">
+                          {formData.clarity || "-"}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Side Stone Details Section */}
+                  <div>
+                    <h3 className="font-semibold text-lg text-foreground mb-4">
+                      Side Stone Details
+                    </h3>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div>
+                        <label className="text-sm text-muted-foreground">
+                          Side Stone Shape
+                        </label>
+                        <p className="text-foreground font-medium">
+                          {formData.sideStoneShape || "-"}
+                        </p>
+                      </div>
+                      <div>
+                        <label className="text-sm text-muted-foreground">
+                          Approx Weight
+                        </label>
+                        <p className="text-foreground font-medium">
+                          {formData.approxWeight || "-"}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Branding & Marking Section */}
+                  <div>
+                    <h3 className="font-semibold text-lg text-foreground mb-4">
+                      Branding & Marking
+                    </h3>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div>
+                        <label className="text-sm text-muted-foreground">
+                          Stamping Details
+                        </label>
+                        <p className="text-foreground font-medium">
+                          {formData.brandText || "-"}
+                        </p>
+                      </div>
+                      <div>
+                        <label className="text-sm text-muted-foreground">
+                          Logo File
+                        </label>
+                        <p className="text-foreground font-medium">
+                          {logoFileName || "-"}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Action Buttons */}
+                <div className="sticky bottom-0 bg-secondary border-t border-input p-6 flex gap-4 justify-end">
+                  <Button
+                    type="button"
+                    onClick={() => setShowReview(false)}
+                    variant="outline"
+                  >
+                    Back to Edit
+                  </Button>
+                  <Button
+                    type="button"
+                    onClick={() => {
+                      setShowReview(false);
+                      handleSubmit(
+                        new Event("submit") as unknown as React.FormEvent
+                      );
+                    }}
+                    disabled={loading}
+                    className="bg-accent text-accent-foreground hover:opacity-90 px-8"
+                  >
+                    {loading ? "Submitting..." : "Confirm & Submit"}
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </Layout>
