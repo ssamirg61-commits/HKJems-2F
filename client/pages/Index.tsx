@@ -56,7 +56,7 @@ export default function Index() {
   };
 
   const handleReview = () => {
-    toast.info("Review functionality - form data is ready to submit");
+    setShowReview(true);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
