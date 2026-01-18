@@ -2,6 +2,7 @@ import { useState } from "react";
 import Layout from "@/components/Layout";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { X } from "lucide-react";
 
 interface FormData {
   designNumber: string;
