@@ -69,8 +69,8 @@ export default function Index() {
         }
       });
 
-      if (logoPreview) {
-        submitData.logoData = logoPreview;
+      if (logoFileName) {
+        submitData.logoFileName = logoFileName;
       }
 
       const response = await fetch("/api/designs", {
@@ -96,6 +96,7 @@ export default function Index() {
         brandText: "",
       });
       setLogoPreview("");
+      setLogoFileName("");
     } catch (error) {
       toast.error("Failed to submit design. Please try again.");
       console.error(error);
