@@ -64,19 +64,21 @@ export default function Index() {
     setLoading(true);
 
     try {
-      const submitData = new FormData();
+      const submitData: Record<string, string> = {};
       Object.entries(formData).forEach(([key, value]) => {
         if (key !== "logoFile" && value) {
-          submitData.append(key, value);
+          submitData[key] = value;
         }
       });
-      if (formData.logoFile) {
-        submitData.append("logo", formData.logoFile);
+
+      if (logoPreview) {
+        submitData.logoData = logoPreview;
       }
 
       const response = await fetch("/api/designs", {
         method: "POST",
-        body: submitData,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(submitData),
       });
 
       if (!response.ok) throw new Error("Failed to submit");
