@@ -634,11 +634,11 @@ export default function Index() {
                           <option value="Custom">Custom</option>
                         </select>
                       </div>
-                      <div>
+                      <div className="sm:col-span-2">
                         <label className="text-sm text-muted-foreground mb-2 block">
                           Logo File
                         </label>
-                        <div className="relative">
+                        <div className="relative mb-2">
                           <input
                             type="file"
                             accept="image/*"
@@ -649,6 +649,15 @@ export default function Index() {
                             {logoFileName || "Choose file"}
                           </div>
                         </div>
+                        {logoPreview && !logoPreview.includes("File selected") && (
+                          <div className="mt-3 p-3 bg-secondary rounded border border-input flex justify-center">
+                            <img
+                              src={logoPreview}
+                              alt="Logo preview"
+                              className="max-h-32 max-w-full object-contain"
+                            />
+                          </div>
+                        )}
                       </div>
                     </div>
                   </div>
