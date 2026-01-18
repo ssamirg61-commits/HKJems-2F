@@ -114,7 +114,64 @@ export const deleteDesign: RequestHandler = (req, res) => {
 
 export const exportDesigns: RequestHandler = (req, res) => {
   try {
-    res.json(designs);
+    if (designs.length === 0) {
+      res.status(400).json({ error: "No designs to export" });
+      return;
+    }
+
+    // Prepare data for Excel export
+    const exportData = designs.map((design) => ({
+      "Design #": design.designNumber,
+      Style: design.style,
+      "Gold Karat": design.goldKarat,
+      "Gold Weight (g)": design.approxGoldWeight,
+      "Stone Type": design.stoneType,
+      "Diamond Shape": design.diamondShape,
+      "Carat Weight": design.caratWeight,
+      Clarity: design.clarity,
+      "Side Stone Shape": design.sideStoneShape,
+      "Side Stone Weight": design.approxWeight,
+      "Brand/Stamping": design.brandText,
+      "Logo File": design.logoFileName || "N/A",
+      "Date Created": new Date(design.createdAt).toLocaleDateString(),
+    }));
+
+    // Create workbook and worksheet
+    const worksheet = XLSX.utils.json_to_sheet(exportData);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Jewelry Designs");
+
+    // Set column widths for better readability
+    const columns = [
+      { wch: 12 },
+      { wch: 15 },
+      { wch: 12 },
+      { wch: 14 },
+      { wch: 12 },
+      { wch: 15 },
+      { wch: 12 },
+      { wch: 10 },
+      { wch: 18 },
+      { wch: 18 },
+      { wch: 15 },
+      { wch: 20 },
+      { wch: 14 },
+    ];
+    worksheet["!cols"] = columns;
+
+    // Generate buffer
+    const buffer = XLSX.write(workbook, { bookType: "xlsx", type: "buffer" });
+
+    // Send as download
+    res.setHeader(
+      "Content-Disposition",
+      `attachment; filename="jewelry-designs-${new Date().toISOString().split("T")[0]}.xlsx"`
+    );
+    res.setHeader(
+      "Content-Type",
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    );
+    res.send(buffer);
   } catch (error) {
     console.error("Error exporting designs:", error);
     res.status(400).json({ error: "Failed to export designs" });
