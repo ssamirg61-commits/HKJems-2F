@@ -28,10 +28,10 @@ export function createServer() {
 
   // Design routes
   app.get("/api/designs", getDesigns);
+  app.get("/api/designs/export", exportDesigns);
   app.post("/api/designs", createDesign);
   app.put("/api/designs/:id", updateDesign);
   app.delete("/api/designs/:id", deleteDesign);
-  app.get("/api/designs/export", exportDesigns);
 
   return app;
 }
