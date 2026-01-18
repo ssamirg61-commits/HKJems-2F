@@ -658,7 +658,7 @@ export default function Index() {
                             {logoFileName || "Choose file"}
                           </div>
                         </div>
-                        {logoPreview && !logoPreview.includes("File selected") && (
+                        {logoPreview && logoPreview.startsWith("data:") && (
                           <div className="mt-3 p-3 bg-secondary rounded border border-input flex justify-center">
                             <img
                               src={logoPreview}
