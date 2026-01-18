@@ -665,11 +665,51 @@ export default function Index() {
                   </Button>
                   <Button
                     type="button"
-                    onClick={() => {
+                    onClick={async () => {
                       setShowReview(false);
-                      handleSubmit(
-                        new Event("submit") as unknown as React.FormEvent
-                      );
+                      setLoading(true);
+                      try {
+                        const submitData: Record<string, string> = {};
+                        Object.entries(formData).forEach(([key, value]) => {
+                          if (key !== "logoFile" && value) {
+                            submitData[key] = value;
+                          }
+                        });
+
+                        if (logoFileName) {
+                          submitData.logoFileName = logoFileName;
+                        }
+
+                        const response = await fetch("/api/designs", {
+                          method: "POST",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify(submitData),
+                        });
+
+                        if (!response.ok) throw new Error("Failed to submit");
+
+                        toast.success("Design submitted successfully!");
+                        setFormData({
+                          designNumber: "",
+                          style: "",
+                          goldKarat: "",
+                          approxGoldWeight: "",
+                          stoneType: "",
+                          diamondShape: "",
+                          caratWeight: "",
+                          clarity: "",
+                          sideStoneShape: "",
+                          approxWeight: "",
+                          brandText: "",
+                        });
+                        setLogoPreview("");
+                        setLogoFileName("");
+                      } catch (error) {
+                        toast.error("Failed to submit design. Please try again.");
+                        console.error(error);
+                      } finally {
+                        setLoading(false);
+                      }
                     }}
                     disabled={loading}
                     className="bg-accent text-accent-foreground hover:opacity-90 px-8"
