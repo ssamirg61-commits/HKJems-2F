@@ -157,8 +157,8 @@ export default function Admin() {
             </div>
           ) : (
             <div className="bg-card rounded-lg shadow-sm overflow-hidden">
-              <div className="overflow-x-auto">
-                <table className="w-full">
+              <div className="overflow-x-auto w-full">
+                <table className="w-full min-w-max">
                   <thead>
                     <tr className="bg-secondary border-b border-input">
                       <th className="px-6 py-4 text-left text-sm font-semibold text-foreground">
