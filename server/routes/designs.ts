@@ -43,7 +43,7 @@ export const createDesign: RequestHandler = (req, res) => {
       sideStoneShape,
       approxWeight,
       brandText,
-      logoData,
+      logoFileName,
     } = req.body;
 
     const design: Design = {
@@ -59,7 +59,7 @@ export const createDesign: RequestHandler = (req, res) => {
       sideStoneShape,
       approxWeight,
       brandText,
-      logoData,
+      logoFileName,
       createdAt: new Date().toISOString(),
     };
 
