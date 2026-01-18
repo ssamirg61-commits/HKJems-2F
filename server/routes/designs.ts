@@ -18,7 +18,7 @@ interface Design {
   sideStoneShape: string;
   approxWeight: string;
   brandText: string;
-  logoData?: string;
+  logoFileName?: string;
   createdAt: string;
 }
 
