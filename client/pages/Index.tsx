@@ -474,36 +474,89 @@ export default function Index() {
                     </h3>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div>
-                        <label className="text-sm text-muted-foreground">
+                        <label className="text-sm text-muted-foreground mb-2 block">
                           Stone Type
                         </label>
-                        <p className="text-foreground font-medium">
-                          {formData.stoneType || "-"}
-                        </p>
+                        <select
+                          value={formData.stoneType}
+                          onChange={(e) =>
+                            setFormData({
+                              ...formData,
+                              stoneType: e.target.value,
+                            })
+                          }
+                          className="w-full px-3 py-2 border border-input bg-card rounded text-sm focus:outline-none focus:ring-2 focus:ring-accent"
+                        >
+                          <option value="">Select Stone</option>
+                          <option value="Diamond">Diamond</option>
+                          <option value="Emerald">Emerald</option>
+                          <option value="Ruby">Ruby</option>
+                          <option value="Sapphire">Sapphire</option>
+                          <option value="Other">Other</option>
+                        </select>
                       </div>
                       <div>
-                        <label className="text-sm text-muted-foreground">
+                        <label className="text-sm text-muted-foreground mb-2 block">
                           Diamond Shape
                         </label>
-                        <p className="text-foreground font-medium">
-                          {formData.diamondShape || "-"}
-                        </p>
+                        <select
+                          value={formData.diamondShape}
+                          onChange={(e) =>
+                            setFormData({
+                              ...formData,
+                              diamondShape: e.target.value,
+                            })
+                          }
+                          className="w-full px-3 py-2 border border-input bg-card rounded text-sm focus:outline-none focus:ring-2 focus:ring-accent"
+                        >
+                          <option value="">Select Shape</option>
+                          <option value="Round">Round</option>
+                          <option value="Oval">Oval</option>
+                          <option value="Princess">Princess</option>
+                          <option value="Cushion">Cushion</option>
+                          <option value="Emerald">Emerald</option>
+                        </select>
                       </div>
                       <div>
-                        <label className="text-sm text-muted-foreground">
+                        <label className="text-sm text-muted-foreground mb-2 block">
                           Carat Weight
                         </label>
-                        <p className="text-foreground font-medium">
-                          {formData.caratWeight || "-"}
-                        </p>
+                        <input
+                          type="text"
+                          value={formData.caratWeight}
+                          onChange={(e) =>
+                            setFormData({
+                              ...formData,
+                              caratWeight: e.target.value,
+                            })
+                          }
+                          placeholder="CT"
+                          className="w-full px-3 py-2 border border-input bg-card rounded text-sm focus:outline-none focus:ring-2 focus:ring-accent"
+                        />
                       </div>
                       <div>
-                        <label className="text-sm text-muted-foreground">
+                        <label className="text-sm text-muted-foreground mb-2 block">
                           Clarity
                         </label>
-                        <p className="text-foreground font-medium">
-                          {formData.clarity || "-"}
-                        </p>
+                        <select
+                          value={formData.clarity}
+                          onChange={(e) =>
+                            setFormData({
+                              ...formData,
+                              clarity: e.target.value,
+                            })
+                          }
+                          className="w-full px-3 py-2 border border-input bg-card rounded text-sm focus:outline-none focus:ring-2 focus:ring-accent"
+                        >
+                          <option value="">Select Clarity</option>
+                          <option value="IF">IF</option>
+                          <option value="VVS1">VVS1</option>
+                          <option value="VVS2">VVS2</option>
+                          <option value="VS1">VS1</option>
+                          <option value="VS2">VS2</option>
+                          <option value="SI1">SI1</option>
+                          <option value="SI2">SI2</option>
+                        </select>
                       </div>
                     </div>
                   </div>
