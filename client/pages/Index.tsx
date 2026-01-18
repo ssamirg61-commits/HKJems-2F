@@ -40,7 +40,7 @@ export default function Index() {
   const [showReview, setShowReview] = useState(false);
 
   const handleInputChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
   ) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
@@ -727,7 +727,9 @@ export default function Index() {
                         setLogoPreview("");
                         setLogoFileName("");
                       } catch (error) {
-                        toast.error("Failed to submit design. Please try again.");
+                        toast.error(
+                          "Failed to submit design. Please try again.",
+                        );
                         console.error(error);
                       } finally {
                         setLoading(false);

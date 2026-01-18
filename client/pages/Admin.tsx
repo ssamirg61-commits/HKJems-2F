@@ -129,7 +129,9 @@ export default function Admin() {
     return (
       <Layout>
         <div className="min-h-screen bg-secondary flex items-center justify-center">
-          <div className="text-lg text-muted-foreground">Loading designs...</div>
+          <div className="text-lg text-muted-foreground">
+            Loading designs...
+          </div>
         </div>
       </Layout>
     );
@@ -152,9 +154,7 @@ export default function Admin() {
 
           {designs.length === 0 ? (
             <div className="bg-card rounded-lg p-8 text-center">
-              <p className="text-muted-foreground">
-                No designs submitted yet.
-              </p>
+              <p className="text-muted-foreground">No designs submitted yet.</p>
             </div>
           ) : (
             <div className="bg-card rounded-lg shadow-sm overflow-hidden">
@@ -187,32 +187,43 @@ export default function Admin() {
                   </thead>
                   <tbody className="divide-y divide-input">
                     {designs.map((design) => (
-                      <tr key={design.id} className="hover:bg-secondary transition-colors">
+                      <tr
+                        key={design.id}
+                        className="hover:bg-secondary transition-colors"
+                      >
                         {editingId === design.id ? (
                           <>
                             <td colSpan={7} className="px-6 py-4">
                               <div className="space-y-4 bg-secondary p-6 rounded max-h-96 overflow-y-auto">
-                                <h3 className="font-semibold text-foreground mb-4">Edit Design Details</h3>
+                                <h3 className="font-semibold text-foreground mb-4">
+                                  Edit Design Details
+                                </h3>
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                   {Object.entries(editingData || {}).map(
                                     ([key, value]) =>
-                                      key !== "id" && key !== "logoData" && (
+                                      key !== "id" &&
+                                      key !== "logoData" && (
                                         <div key={key}>
                                           <label className="block text-sm font-medium text-foreground mb-2">
                                             {key
                                               .replace(/([A-Z])/g, " $1")
-                                              .replace(/^./, (c) => c.toUpperCase())}
+                                              .replace(/^./, (c) =>
+                                                c.toUpperCase(),
+                                              )}
                                           </label>
                                           <input
                                             type="text"
                                             value={value || ""}
                                             onChange={(e) =>
-                                              handleEditChange(key, e.target.value)
+                                              handleEditChange(
+                                                key,
+                                                e.target.value,
+                                              )
                                             }
                                             className="w-full px-3 py-2 border border-input bg-card rounded text-sm focus:outline-none focus:ring-2 focus:ring-accent"
                                           />
                                         </div>
-                                      )
+                                      ),
                                   )}
                                 </div>
                                 {design.logoData && (
