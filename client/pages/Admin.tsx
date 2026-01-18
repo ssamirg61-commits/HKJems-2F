@@ -53,7 +53,7 @@ export default function Admin() {
 
   const handleEdit = (design: Design) => {
     setEditingId(design.id);
-    const { id, logoUrl, createdAt, ...editableFields } = design;
+    const { id, logoData, createdAt, ...editableFields } = design;
     setEditingData({ id, ...editableFields });
   };
 
