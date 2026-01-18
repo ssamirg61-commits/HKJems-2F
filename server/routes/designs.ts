@@ -20,6 +20,7 @@ interface Design {
   approxWeight: string;
   brandText: string;
   logoFileName?: string;
+  logoData?: string;
   createdAt: string;
 }
 
