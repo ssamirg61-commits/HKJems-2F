@@ -190,20 +190,21 @@ export default function Admin() {
                         {editingId === design.id ? (
                           <>
                             <td colSpan={7} className="px-6 py-4">
-                              <div className="space-y-4 bg-secondary p-4 rounded">
-                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                              <div className="space-y-4 bg-secondary p-6 rounded max-h-96 overflow-y-auto">
+                                <h3 className="font-semibold text-foreground mb-4">Edit Design Details</h3>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                   {Object.entries(editingData || {}).map(
                                     ([key, value]) =>
                                       key !== "id" && (
                                         <div key={key}>
-                                          <label className="block text-sm font-medium text-foreground mb-1">
+                                          <label className="block text-sm font-medium text-foreground mb-2">
                                             {key
                                               .replace(/([A-Z])/g, " $1")
-                                              .trim()}
+                                              .replace(/^./, (c) => c.toUpperCase())}
                                           </label>
                                           <input
                                             type="text"
-                                            value={value}
+                                            value={value || ""}
                                             onChange={(e) =>
                                               handleEditChange(key, e.target.value)
                                             }
@@ -213,7 +214,7 @@ export default function Admin() {
                                       )
                                   )}
                                 </div>
-                                <div className="flex gap-2 justify-end">
+                                <div className="flex gap-2 justify-end pt-4 border-t border-input">
                                   <Button
                                     onClick={() => setEditingId(null)}
                                     variant="outline"
@@ -224,7 +225,7 @@ export default function Admin() {
                                     onClick={handleSaveEdit}
                                     className="bg-accent text-accent-foreground hover:opacity-90"
                                   >
-                                    Save
+                                    Save Changes
                                   </Button>
                                 </div>
                               </div>
