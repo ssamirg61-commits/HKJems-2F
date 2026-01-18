@@ -568,20 +568,42 @@ export default function Index() {
                     </h3>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div>
-                        <label className="text-sm text-muted-foreground">
+                        <label className="text-sm text-muted-foreground mb-2 block">
                           Side Stone Shape
                         </label>
-                        <p className="text-foreground font-medium">
-                          {formData.sideStoneShape || "-"}
-                        </p>
+                        <select
+                          value={formData.sideStoneShape}
+                          onChange={(e) =>
+                            setFormData({
+                              ...formData,
+                              sideStoneShape: e.target.value,
+                            })
+                          }
+                          className="w-full px-3 py-2 border border-input bg-card rounded text-sm focus:outline-none focus:ring-2 focus:ring-accent"
+                        >
+                          <option value="">Select Shape</option>
+                          <option value="Round">Round</option>
+                          <option value="Baguette">Baguette</option>
+                          <option value="Tapered">Tapered</option>
+                          <option value="Princess">Princess</option>
+                        </select>
                       </div>
                       <div>
-                        <label className="text-sm text-muted-foreground">
+                        <label className="text-sm text-muted-foreground mb-2 block">
                           Approx Weight
                         </label>
-                        <p className="text-foreground font-medium">
-                          {formData.approxWeight || "-"}
-                        </p>
+                        <input
+                          type="text"
+                          value={formData.approxWeight}
+                          onChange={(e) =>
+                            setFormData({
+                              ...formData,
+                              approxWeight: e.target.value,
+                            })
+                          }
+                          placeholder="CT / MM"
+                          className="w-full px-3 py-2 border border-input bg-card rounded text-sm focus:outline-none focus:ring-2 focus:ring-accent"
+                        />
                       </div>
                     </div>
                   </div>
