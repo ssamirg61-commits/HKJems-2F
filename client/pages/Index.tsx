@@ -389,36 +389,80 @@ export default function Index() {
                     </h3>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div>
-                        <label className="text-sm text-muted-foreground">
+                        <label className="text-sm text-muted-foreground mb-2 block">
                           Design Number
                         </label>
-                        <p className="text-foreground font-medium">
-                          {formData.designNumber || "Auto generated"}
-                        </p>
+                        <input
+                          type="text"
+                          value={formData.designNumber}
+                          onChange={(e) =>
+                            setFormData({
+                              ...formData,
+                              designNumber: e.target.value,
+                            })
+                          }
+                          placeholder="Auto generated"
+                          className="w-full px-3 py-2 border border-input bg-card rounded text-sm focus:outline-none focus:ring-2 focus:ring-accent"
+                        />
                       </div>
                       <div>
-                        <label className="text-sm text-muted-foreground">
+                        <label className="text-sm text-muted-foreground mb-2 block">
                           Style
                         </label>
-                        <p className="text-foreground font-medium">
-                          {formData.style || "-"}
-                        </p>
+                        <select
+                          value={formData.style}
+                          onChange={(e) =>
+                            setFormData({
+                              ...formData,
+                              style: e.target.value,
+                            })
+                          }
+                          className="w-full px-3 py-2 border border-input bg-card rounded text-sm focus:outline-none focus:ring-2 focus:ring-accent"
+                        >
+                          <option value="">Select Style</option>
+                          <option value="Ring">Ring</option>
+                          <option value="Pendant">Pendant</option>
+                          <option value="Stud">Stud</option>
+                          <option value="Bracelet">Bracelet</option>
+                          <option value="Necklace">Necklace</option>
+                        </select>
                       </div>
                       <div>
-                        <label className="text-sm text-muted-foreground">
+                        <label className="text-sm text-muted-foreground mb-2 block">
                           Gold Karat
                         </label>
-                        <p className="text-foreground font-medium">
-                          {formData.goldKarat || "-"}
-                        </p>
+                        <select
+                          value={formData.goldKarat}
+                          onChange={(e) =>
+                            setFormData({
+                              ...formData,
+                              goldKarat: e.target.value,
+                            })
+                          }
+                          className="w-full px-3 py-2 border border-input bg-card rounded text-sm focus:outline-none focus:ring-2 focus:ring-accent"
+                        >
+                          <option value="">Select Karat</option>
+                          <option value="14K">14K</option>
+                          <option value="18K">18K</option>
+                          <option value="22K">22K</option>
+                        </select>
                       </div>
                       <div>
-                        <label className="text-sm text-muted-foreground">
+                        <label className="text-sm text-muted-foreground mb-2 block">
                           Approx Gold Weight
                         </label>
-                        <p className="text-foreground font-medium">
-                          {formData.approxGoldWeight || "-"}
-                        </p>
+                        <input
+                          type="text"
+                          value={formData.approxGoldWeight}
+                          onChange={(e) =>
+                            setFormData({
+                              ...formData,
+                              approxGoldWeight: e.target.value,
+                            })
+                          }
+                          placeholder="grams"
+                          className="w-full px-3 py-2 border border-input bg-card rounded text-sm focus:outline-none focus:ring-2 focus:ring-accent"
+                        />
                       </div>
                     </div>
                   </div>
