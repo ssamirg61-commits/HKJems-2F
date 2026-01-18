@@ -43,12 +43,8 @@ export const createDesign: RequestHandler = (req, res) => {
       sideStoneShape,
       approxWeight,
       brandText,
+      logoData,
     } = req.body;
-
-    let logoData: string | undefined;
-    if (req.file) {
-      logoData = req.file.buffer.toString("base64");
-    }
 
     const design: Design = {
       id: generateId(),
