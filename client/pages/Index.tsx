@@ -51,7 +51,12 @@ export default function Index() {
     if (file) {
       setFormData((prev) => ({ ...prev, logoFile: file }));
       setLogoFileName(file.name);
-      setLogoPreview("✓ File selected: " + file.name);
+
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setLogoPreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
     }
   };
 
