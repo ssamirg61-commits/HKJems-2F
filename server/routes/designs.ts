@@ -46,6 +46,7 @@ export const createDesign: RequestHandler = (req, res) => {
       approxWeight,
       brandText,
       logoFileName,
+      logoData,
     } = req.body;
 
     const design: Design = {
@@ -62,6 +63,7 @@ export const createDesign: RequestHandler = (req, res) => {
       approxWeight,
       brandText,
       logoFileName,
+      logoData,
       createdAt: new Date().toISOString(),
     };
 
