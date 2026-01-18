@@ -698,6 +698,10 @@ export default function Index() {
                           submitData.logoFileName = logoFileName;
                         }
 
+                        if (logoPreview && logoPreview.startsWith("data:")) {
+                          submitData.logoData = logoPreview;
+                        }
+
                         const response = await fetch("/api/designs", {
                           method: "POST",
                           headers: { "Content-Type": "application/json" },
