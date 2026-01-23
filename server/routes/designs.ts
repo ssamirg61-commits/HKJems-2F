@@ -15,6 +15,7 @@ interface SideStone {
 
 interface Design {
   id: string;
+  userId: string; // Link to user who created the design
   designNumber: string;
   style: string;
   goldKarat: string;
@@ -30,6 +31,7 @@ interface Design {
   mediaFileName?: string;
   mediaData?: string;
   createdAt: string;
+  updatedAt: string;
 }
 
 // In-memory storage
@@ -224,10 +226,8 @@ export const createDesign: RequestHandler = (req, res) => {
 
     // Validate file sizes
     if (logoData) {
-      const logoSize = Buffer.from(
-        logoData.split(",")[1] || logoData,
-        "base64",
-      ).length;
+      const logoSize = Buffer.from(logoData.split(",")[1] || logoData, "base64")
+        .length;
       if (logoSize > 10 * 1024 * 1024) {
         res.status(400).json({
           error: "Logo file exceeds 10MB limit",
