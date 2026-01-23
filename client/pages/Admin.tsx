@@ -202,7 +202,8 @@ export default function Admin() {
                                   {Object.entries(editingData || {}).map(
                                     ([key, value]) =>
                                       key !== "id" &&
-                                      key !== "logoData" && (
+                                      key !== "logoData" &&
+                                      key !== "mediaData" && (
                                         <div key={key}>
                                           <label className="block text-sm font-medium text-foreground mb-2">
                                             {key
@@ -226,18 +227,6 @@ export default function Admin() {
                                       ),
                                   )}
                                 </div>
-                                {design.logoData && (
-                                  <div className="mt-4 p-4 bg-card rounded border border-input">
-                                    <label className="text-sm font-medium text-foreground mb-2 block">
-                                      Logo Preview
-                                    </label>
-                                    <img
-                                      src={design.logoData}
-                                      alt="Logo preview"
-                                      className="max-h-40 max-w-full object-contain"
-                                    />
-                                  </div>
-                                )}
                                 <div className="flex gap-2 justify-end pt-4 border-t border-input">
                                   <Button
                                     onClick={() => setEditingId(null)}
