@@ -1030,7 +1030,19 @@ export default function Index() {
                   </Button>
                   <Button
                     type="button"
-                    onClick={handleSubmit}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      const form = document.querySelector(
+                        "form",
+                      ) as HTMLFormElement;
+                      if (form) {
+                        const submitEvent = new Event("submit", {
+                          bubbles: true,
+                          cancelable: true,
+                        });
+                        form.dispatchEvent(submitEvent);
+                      }
+                    }}
                     disabled={loading}
                     className="bg-accent text-accent-foreground hover:opacity-90 px-8"
                   >
