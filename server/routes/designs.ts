@@ -6,6 +6,13 @@ function generateId() {
   return Date.now().toString(36) + Math.random().toString(36).substr(2);
 }
 
+interface SideStone {
+  id: string;
+  description: string;
+  shape: string;
+  weight: string;
+}
+
 interface Design {
   id: string;
   designNumber: string;
@@ -16,8 +23,7 @@ interface Design {
   diamondShape: string;
   caratWeight: string;
   clarity: string;
-  sideStoneShape: string;
-  approxWeight: string;
+  sideStones: SideStone[];
   marking: string;
   logoFileName?: string;
   logoData?: string;
@@ -32,7 +38,6 @@ let designs: Design[] = [];
 // Helper function to send email notification
 async function sendEmailNotification(design: Design): Promise<void> {
   try {
-    // Check if we have email configuration
     const gmailUser = process.env.GMAIL_USER;
     const gmailPassword = process.env.GMAIL_APP_PASSWORD;
     const webhookUrl = process.env.WEBHOOK_URL;
@@ -44,6 +49,7 @@ async function sendEmailNotification(design: Design): Promise<void> {
       return;
     }
 
+    // Build email content with all form data
     const emailContent = {
       to: "akira@hkjewel.co",
       subject: `New Jewelry Design Submission - ${design.designNumber}`,
@@ -57,8 +63,7 @@ async function sendEmailNotification(design: Design): Promise<void> {
         diamondShape: design.diamondShape,
         caratWeight: design.caratWeight,
         clarity: design.clarity,
-        sideStoneShape: design.sideStoneShape,
-        approxWeight: design.approxWeight,
+        sideStones: design.sideStones,
         marking: design.marking,
         createdAt: design.createdAt,
       },
@@ -88,21 +93,31 @@ async function sendEmailNotification(design: Design): Promise<void> {
         });
 
         if (response.ok) {
-          console.log("Email notification sent via webhook");
+          console.log(
+            `Email notification sent via webhook for design ${design.designNumber}`,
+          );
           return;
+        } else {
+          console.warn(
+            `Webhook returned status ${response.status} for design ${design.designNumber}`,
+          );
         }
       } catch (error) {
         console.warn("Webhook email failed:", error);
       }
     }
 
-    // Fallback: attempt direct SMTP email if credentials are set
-    // Note: This would require nodemailer, which is not installed
-    // For now, we just log the failure
-
+    // Log email details for debugging
     console.log(
-      "Email service not configured. Email notification details:",
-      emailContent,
+      `Email service not fully configured. Email details for ${design.designNumber}:`,
+      {
+        to: "akira@hkjewel.co",
+        subject: emailContent.subject,
+        filesCount: [
+          design.logoFileName ? 1 : 0,
+          design.mediaFileName ? 1 : 0,
+        ].reduce((a, b) => a + b, 0),
+      },
     );
   } catch (error) {
     console.error("Error sending email notification:", error);
@@ -117,21 +132,13 @@ function validateFormData(formData: Record<string, any>): {
 } {
   const errors: string[] = [];
 
-  const requiredTextFields = [
-    "designNumber",
-    "approxGoldWeight",
-    "caratWeight",
-    "approxWeight",
-    "marking",
-  ];
-
+  const requiredTextFields = ["approxGoldWeight", "caratWeight"];
   const requiredDropdownFields = [
     "style",
     "goldKarat",
     "stoneType",
     "diamondShape",
     "clarity",
-    "sideStoneShape",
   ];
 
   // Check required text fields
@@ -147,11 +154,6 @@ function validateFormData(formData: Record<string, any>): {
       errors.push(`${field} is required`);
     }
   });
-
-  // Validate marking length
-  if (formData.marking && formData.marking.length > 50) {
-    errors.push("Marking must not exceed 50 characters");
-  }
 
   // Check file uploads
   if (!formData.logoFileName) {
@@ -169,11 +171,11 @@ function validateFormData(formData: Record<string, any>): {
 }
 
 export const getDesigns: RequestHandler = (_req, res) => {
-  // Return designs without file data to keep response size reasonable
+  // Return designs without large file data to keep response size reasonable
   const designsWithoutData = designs.map((design) => ({
     ...design,
-    logoData: undefined,
-    mediaData: undefined,
+    logoData: design.logoFileName ? "[Image Data]" : undefined,
+    mediaData: design.mediaFileName ? "[Media Data]" : undefined,
   }));
   res.json(designsWithoutData);
 };
@@ -189,8 +191,7 @@ export const createDesign: RequestHandler = (req, res) => {
       diamondShape,
       caratWeight,
       clarity,
-      sideStoneShape,
-      approxWeight,
+      sideStones,
       marking,
       logoFileName,
       logoData,
@@ -208,9 +209,6 @@ export const createDesign: RequestHandler = (req, res) => {
       diamondShape,
       caratWeight,
       clarity,
-      sideStoneShape,
-      approxWeight,
-      marking,
       logoFileName,
       mediaFileName,
     };
@@ -251,7 +249,7 @@ export const createDesign: RequestHandler = (req, res) => {
 
     const design: Design = {
       id: generateId(),
-      designNumber: designNumber || `DN-${Date.now()}`,
+      designNumber: designNumber || `HK-${Date.now()}`,
       style,
       goldKarat,
       approxGoldWeight,
@@ -259,9 +257,8 @@ export const createDesign: RequestHandler = (req, res) => {
       diamondShape,
       caratWeight,
       clarity,
-      sideStoneShape,
-      approxWeight,
-      marking,
+      sideStones: sideStones || [],
+      marking: marking || "",
       logoFileName,
       logoData,
       mediaFileName,
@@ -287,8 +284,7 @@ export const createDesign: RequestHandler = (req, res) => {
       diamondShape: design.diamondShape,
       caratWeight: design.caratWeight,
       clarity: design.clarity,
-      sideStoneShape: design.sideStoneShape,
-      approxWeight: design.approxWeight,
+      sideStones: design.sideStones,
       marking: design.marking,
       logoFileName: design.logoFileName,
       mediaFileName: design.mediaFileName,
@@ -350,22 +346,41 @@ export const exportDesigns: RequestHandler = (req, res) => {
     }
 
     // Prepare data for Excel export
-    const exportData = designs.map((design) => ({
-      "Design #": design.designNumber,
-      Style: design.style,
-      "Gold Karat": design.goldKarat,
-      "Gold Weight (g)": design.approxGoldWeight,
-      "Stone Type": design.stoneType,
-      "Diamond Shape": design.diamondShape,
-      "Carat Weight": design.caratWeight,
-      Clarity: design.clarity,
-      "Side Stone Shape": design.sideStoneShape,
-      "Side Stone Weight": design.approxWeight,
-      Marking: design.marking,
-      "Logo File": design.logoFileName || "N/A",
-      "Media File": design.mediaFileName || "N/A",
-      "Date Created": new Date(design.createdAt).toLocaleDateString(),
-    }));
+    const exportData: Record<string, any>[] = [];
+
+    designs.forEach((design) => {
+      // Create base row for each design
+      const baseRow = {
+        "Design #": design.designNumber,
+        Style: design.style,
+        "Gold Karat": design.goldKarat,
+        "Gold Weight (g)": design.approxGoldWeight,
+        "Stone Type": design.stoneType,
+        "Diamond Shape": design.diamondShape,
+        "Carat Weight": design.caratWeight,
+        Clarity: design.clarity,
+        Marking: design.marking || "-",
+        "Logo File": design.logoFileName || "-",
+        "Media File": design.mediaFileName || "-",
+        "Date Created": new Date(design.createdAt).toLocaleDateString(),
+      };
+
+      // Add side stone data (up to 5 columns)
+      for (let i = 0; i < 5; i++) {
+        const stone = design.sideStones[i];
+        if (stone) {
+          baseRow[`Side Stone ${i + 1} Description`] = stone.description || "-";
+          baseRow[`Side Stone ${i + 1} Shape`] = stone.shape || "-";
+          baseRow[`Side Stone ${i + 1} Weight`] = stone.weight || "-";
+        } else {
+          baseRow[`Side Stone ${i + 1} Description`] = "-";
+          baseRow[`Side Stone ${i + 1} Shape`] = "-";
+          baseRow[`Side Stone ${i + 1} Weight`] = "-";
+        }
+      }
+
+      exportData.push(baseRow);
+    });
 
     // Create workbook and worksheet
     const worksheet = XLSX.utils.json_to_sheet(exportData);
@@ -374,20 +389,34 @@ export const exportDesigns: RequestHandler = (req, res) => {
 
     // Set column widths for better readability
     const columns = [
-      { wch: 12 },
+      { wch: 12 }, // Design #
+      { wch: 12 }, // Style
+      { wch: 12 }, // Gold Karat
+      { wch: 14 }, // Gold Weight
+      { wch: 12 }, // Stone Type
+      { wch: 15 }, // Diamond Shape
+      { wch: 12 }, // Carat Weight
+      { wch: 10 }, // Clarity
+      { wch: 15 }, // Marking
+      { wch: 15 }, // Logo File
+      { wch: 15 }, // Media File
+      { wch: 14 }, // Date Created
+      // Side Stones (3 columns × 5 = 15)
+      { wch: 25 },
       { wch: 15 },
       { wch: 12 },
-      { wch: 14 },
-      { wch: 12 },
+      { wch: 25 },
       { wch: 15 },
       { wch: 12 },
-      { wch: 10 },
-      { wch: 18 },
-      { wch: 18 },
+      { wch: 25 },
       { wch: 15 },
-      { wch: 20 },
-      { wch: 20 },
-      { wch: 14 },
+      { wch: 12 },
+      { wch: 25 },
+      { wch: 15 },
+      { wch: 12 },
+      { wch: 25 },
+      { wch: 15 },
+      { wch: 12 },
     ];
     worksheet["!cols"] = columns;
 
