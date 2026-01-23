@@ -195,6 +195,13 @@ export const getDesigns: RequestHandler = (req, res) => {
 
 export const createDesign: RequestHandler = (req, res) => {
   try {
+    const userId = (req as any).userId;
+
+    if (!userId) {
+      res.status(401).json({ error: "Authentication required" });
+      return;
+    }
+
     const {
       designNumber,
       style,
