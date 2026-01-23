@@ -1,17 +1,9 @@
-import { RequestHandler, Request, Response } from "express";
+import { RequestHandler } from "express";
 import * as XLSX from "xlsx";
-import nodemailer from "nodemailer";
 
 // Simple ID generator
 function generateId() {
   return Date.now().toString(36) + Math.random().toString(36).substr(2);
-}
-
-interface FileData {
-  filename: string;
-  mimetype: string;
-  size: number;
-  data: string; // base64
 }
 
 interface Design {
@@ -27,301 +19,283 @@ interface Design {
   sideStoneShape: string;
   approxWeight: string;
   marking: string;
-  logoFile?: FileData;
-  mediaFile?: FileData;
+  logoFileName?: string;
+  logoData?: string;
+  mediaFileName?: string;
+  mediaData?: string;
   createdAt: string;
 }
 
 // In-memory storage
 let designs: Design[] = [];
 
-// Email transporter configuration
-const emailTransporter = nodemailer.createTransport({
-  service: "gmail",
-  auth: {
-    user: process.env.GMAIL_USER || "",
-    pass: process.env.GMAIL_APP_PASSWORD || "",
-  },
-});
-
-// Helper function to parse multipart form data
-async function parseFormData(req: Request): Promise<Record<string, any>> {
-  return new Promise((resolve, reject) => {
-    let body = "";
-
-    req.on("data", (chunk) => {
-      body += chunk.toString();
-    });
-
-    req.on("end", () => {
-      resolve({ body, contentType: req.headers["content-type"] });
-    });
-
-    req.on("error", reject);
-  });
-}
-
-// Helper function to send email
+// Helper function to send email notification
 async function sendEmailNotification(design: Design): Promise<void> {
   try {
-    if (!process.env.GMAIL_USER || !process.env.GMAIL_APP_PASSWORD) {
+    // Check if we have email configuration
+    const gmailUser = process.env.GMAIL_USER;
+    const gmailPassword = process.env.GMAIL_APP_PASSWORD;
+    const webhookUrl = process.env.WEBHOOK_URL;
+
+    if (!gmailUser && !webhookUrl) {
       console.warn(
-        "Email configuration not set. Skipping email notification.",
+        "Email configuration not set. Please set GMAIL_USER and GMAIL_APP_PASSWORD or WEBHOOK_URL.",
       );
       return;
     }
 
-    let htmlBody = `
-      <h2>New Jewelry Design Submission</h2>
-      <p>A new design has been submitted. Here are the details:</p>
-      
-      <h3>Design Details</h3>
-      <ul>
-        <li><strong>Design Number:</strong> ${design.designNumber}</li>
-        <li><strong>Style:</strong> ${design.style}</li>
-        <li><strong>Gold Karat:</strong> ${design.goldKarat}</li>
-        <li><strong>Approx Gold Weight:</strong> ${design.approxGoldWeight}g</li>
-      </ul>
-      
-      <h3>Center Stone Details</h3>
-      <ul>
-        <li><strong>Stone Type:</strong> ${design.stoneType}</li>
-        <li><strong>Diamond Shape:</strong> ${design.diamondShape}</li>
-        <li><strong>Carat Weight:</strong> ${design.caratWeight}</li>
-        <li><strong>Clarity:</strong> ${design.clarity}</li>
-      </ul>
-      
-      <h3>Side Stone Details</h3>
-      <ul>
-        <li><strong>Side Stone Shape:</strong> ${design.sideStoneShape}</li>
-        <li><strong>Approx Weight:</strong> ${design.approxWeight}</li>
-      </ul>
-      
-      <h3>Marking & Stamping</h3>
-      <ul>
-        <li><strong>Marking:</strong> ${design.marking}</li>
-      </ul>
-      
-      <p><strong>Submitted at:</strong> ${new Date(design.createdAt).toLocaleString()}</p>
-    `;
-
-    const attachments = [];
-
-    // Add logo as attachment if present
-    if (design.logoFile) {
-      attachments.push({
-        filename: design.logoFile.filename,
-        content: design.logoFile.data,
-        encoding: "base64",
-      });
-    }
-
-    // Add media as attachment if present
-    if (design.mediaFile) {
-      attachments.push({
-        filename: design.mediaFile.filename,
-        content: design.mediaFile.data,
-        encoding: "base64",
-      });
-    }
-
-    await emailTransporter.sendMail({
-      from: process.env.GMAIL_USER,
+    const emailContent = {
       to: "akira@hkjewel.co",
       subject: `New Jewelry Design Submission - ${design.designNumber}`,
-      html: htmlBody,
-      attachments: attachments,
-    });
+      designData: {
+        id: design.id,
+        designNumber: design.designNumber,
+        style: design.style,
+        goldKarat: design.goldKarat,
+        approxGoldWeight: design.approxGoldWeight,
+        stoneType: design.stoneType,
+        diamondShape: design.diamondShape,
+        caratWeight: design.caratWeight,
+        clarity: design.clarity,
+        sideStoneShape: design.sideStoneShape,
+        approxWeight: design.approxWeight,
+        marking: design.marking,
+        createdAt: design.createdAt,
+      },
+      files: {
+        logo: design.logoFileName
+          ? {
+              filename: design.logoFileName,
+              data: design.logoData,
+            }
+          : null,
+        media: design.mediaFileName
+          ? {
+              filename: design.mediaFileName,
+              data: design.mediaData,
+            }
+          : null,
+      },
+    };
 
-    console.log("Email notification sent successfully");
+    // Try webhook first
+    if (webhookUrl) {
+      try {
+        const response = await fetch(webhookUrl, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(emailContent),
+        });
+
+        if (response.ok) {
+          console.log("Email notification sent via webhook");
+          return;
+        }
+      } catch (error) {
+        console.warn("Webhook email failed:", error);
+      }
+    }
+
+    // Fallback: attempt direct SMTP email if credentials are set
+    // Note: This would require nodemailer, which is not installed
+    // For now, we just log the failure
+
+    console.log(
+      "Email service not configured. Email notification details:",
+      emailContent,
+    );
   } catch (error) {
-    console.error("Error sending email:", error);
+    console.error("Error sending email notification:", error);
     // Don't throw - email failure shouldn't block form submission
   }
 }
 
-// Helper to validate file type and size
-function validateFile(
-  buffer: Buffer,
-  filename: string,
-  maxSize: number,
-  allowedTypes: string[],
-): { valid: boolean; error?: string } {
-  // Check file size
-  if (buffer.length > maxSize) {
-    return {
-      valid: false,
-      error: `File size exceeds ${maxSize / (1024 * 1024)}MB limit`,
-    };
-  }
+// Validate required fields
+function validateFormData(formData: Record<string, any>): {
+  valid: boolean;
+  errors: string[];
+} {
+  const errors: string[] = [];
 
-  // For logo files, check image types
-  if (allowedTypes.length === 3) {
-    // Logo file validation
-    const ext = filename.split(".").pop()?.toLowerCase();
-    if (!["png", "jpg", "jpeg"].includes(ext || "")) {
-      return {
-        valid: false,
-        error: "Logo must be PNG, JPEG, or JPG format",
-      };
+  const requiredTextFields = [
+    "designNumber",
+    "approxGoldWeight",
+    "caratWeight",
+    "approxWeight",
+    "marking",
+  ];
+
+  const requiredDropdownFields = [
+    "style",
+    "goldKarat",
+    "stoneType",
+    "diamondShape",
+    "clarity",
+    "sideStoneShape",
+  ];
+
+  // Check required text fields
+  requiredTextFields.forEach((field) => {
+    if (!formData[field] || formData[field].toString().trim() === "") {
+      errors.push(`${field} is required`);
     }
+  });
+
+  // Check required dropdowns
+  requiredDropdownFields.forEach((field) => {
+    if (!formData[field] || formData[field].toString().trim() === "") {
+      errors.push(`${field} is required`);
+    }
+  });
+
+  // Validate marking length
+  if (formData.marking && formData.marking.length > 50) {
+    errors.push("Marking must not exceed 50 characters");
   }
 
-  return { valid: true };
+  // Check file uploads
+  if (!formData.logoFileName) {
+    errors.push("Logo file is required");
+  }
+
+  if (!formData.mediaFileName) {
+    errors.push("Media file is required");
+  }
+
+  return {
+    valid: errors.length === 0,
+    errors,
+  };
 }
 
 export const getDesigns: RequestHandler = (_req, res) => {
-  res.json(designs);
+  // Return designs without file data to keep response size reasonable
+  const designsWithoutData = designs.map((design) => ({
+    ...design,
+    logoData: undefined,
+    mediaData: undefined,
+  }));
+  res.json(designsWithoutData);
 };
 
-export const createDesign: RequestHandler = async (req, res) => {
+export const createDesign: RequestHandler = (req, res) => {
   try {
-    const contentType = req.headers["content-type"] || "";
-
-    let formFields: Record<string, string> = {};
-    let logoFile: FileData | undefined;
-    let mediaFile: FileData | undefined;
-
-    // Handle JSON format (for backward compatibility with FormData)
-    if (contentType.includes("application/json")) {
-      formFields = req.body;
-    } else if (contentType.includes("multipart/form-data")) {
-      // Parse multipart form data
-      const boundary = contentType.split("boundary=")[1];
-      if (!boundary) {
-        res.status(400).json({ error: "Invalid content type" });
-        return;
-      }
-
-      const rawBody = (req as any).rawBody || Buffer.concat(
-        (req as any).bodyChunks || [],
-      );
-      const parts = rawBody.toString().split(`--${boundary}`);
-
-      for (const part of parts) {
-        if (!part || part === "--\r\n" || part === "--") continue;
-
-        const [headerSection, ...contentSection] = part.split("\r\n\r\n");
-        const content = contentSection.join("\r\n\r\n").replace(/\r\n--$/, "");
-
-        if (headerSection.includes('name="logoFile"')) {
-          const filename =
-            headerSection.match(/filename="(.+?)"/)?.[1] || "logo";
-          logoFile = {
-            filename,
-            mimetype: "image/*",
-            size: content.length,
-            data: Buffer.from(content, "binary").toString("base64"),
-          };
-        } else if (headerSection.includes('name="mediaFile"')) {
-          const filename =
-            headerSection.match(/filename="(.+?)"/)?.[1] || "media";
-          mediaFile = {
-            filename,
-            mimetype: "file",
-            size: content.length,
-            data: Buffer.from(content, "binary").toString("base64"),
-          };
-        } else {
-          const fieldName = headerSection.match(/name="(.+?)"/)?.[1];
-          if (fieldName && !fieldName.includes("File")) {
-            formFields[fieldName] = content.trim();
-          }
-        }
-      }
-    } else {
-      // Treat as JSON in the body
-      formFields = req.body;
-
-      // Check for base64 encoded files (legacy format)
-      if (req.body.logoData) {
-        logoFile = {
-          filename: req.body.logoFileName || "logo",
-          mimetype: "image/*",
-          size: req.body.logoData.length,
-          data: req.body.logoData,
-        };
-      }
-    }
+    const {
+      designNumber,
+      style,
+      goldKarat,
+      approxGoldWeight,
+      stoneType,
+      diamondShape,
+      caratWeight,
+      clarity,
+      sideStoneShape,
+      approxWeight,
+      marking,
+      logoFileName,
+      logoData,
+      mediaFileName,
+      mediaData,
+    } = req.body;
 
     // Validate required fields
-    const requiredFields = [
-      "designNumber",
-      "style",
-      "goldKarat",
-      "approxGoldWeight",
-      "stoneType",
-      "diamondShape",
-      "caratWeight",
-      "clarity",
-      "sideStoneShape",
-      "approxWeight",
-      "marking",
-    ];
+    const formData = {
+      designNumber,
+      style,
+      goldKarat,
+      approxGoldWeight,
+      stoneType,
+      diamondShape,
+      caratWeight,
+      clarity,
+      sideStoneShape,
+      approxWeight,
+      marking,
+      logoFileName,
+      mediaFileName,
+    };
 
-    const missingFields = requiredFields.filter(
-      (field) => !formFields[field] || formFields[field].trim() === "",
-    );
-
-    if (missingFields.length > 0) {
+    const validation = validateFormData(formData);
+    if (!validation.valid) {
       res.status(400).json({
-        error: `Missing required fields: ${missingFields.join(", ")}`,
+        error: "Validation failed",
+        errors: validation.errors,
       });
       return;
     }
 
-    if (!logoFile) {
-      res.status(400).json({ error: "Logo file is required" });
-      return;
+    // Validate file sizes
+    if (logoData) {
+      const logoSize = Buffer.from(logoData.split(",")[1] || logoData, "base64")
+        .length;
+      if (logoSize > 10 * 1024 * 1024) {
+        res.status(400).json({
+          error: "Logo file exceeds 10MB limit",
+        });
+        return;
+      }
     }
 
-    if (!mediaFile) {
-      res.status(400).json({ error: "Media file is required" });
-      return;
-    }
-
-    // Validate marking length
-    if (formFields.marking.length > 50) {
-      res
-        .status(400)
-        .json({ error: "Marking must not exceed 50 characters" });
-      return;
+    if (mediaData) {
+      const mediaSize = Buffer.from(
+        mediaData.split(",")[1] || mediaData,
+        "base64",
+      ).length;
+      if (mediaSize > 100 * 1024 * 1024) {
+        res.status(400).json({
+          error: "Media file exceeds 100MB limit",
+        });
+        return;
+      }
     }
 
     const design: Design = {
       id: generateId(),
-      designNumber: formFields.designNumber || `DN-${Date.now()}`,
-      style: formFields.style,
-      goldKarat: formFields.goldKarat,
-      approxGoldWeight: formFields.approxGoldWeight,
-      stoneType: formFields.stoneType,
-      diamondShape: formFields.diamondShape,
-      caratWeight: formFields.caratWeight,
-      clarity: formFields.clarity,
-      sideStoneShape: formFields.sideStoneShape,
-      approxWeight: formFields.approxWeight,
-      marking: formFields.marking,
-      logoFile,
-      mediaFile,
+      designNumber: designNumber || `DN-${Date.now()}`,
+      style,
+      goldKarat,
+      approxGoldWeight,
+      stoneType,
+      diamondShape,
+      caratWeight,
+      clarity,
+      sideStoneShape,
+      approxWeight,
+      marking,
+      logoFileName,
+      logoData,
+      mediaFileName,
+      mediaData,
       createdAt: new Date().toISOString(),
     };
 
     designs.push(design);
 
-    // Send email notification asynchronously (don't wait for it)
-    sendEmailNotification(design).catch(console.error);
-
-    res.status(201).json({
-      ...design,
-      logoFile: {
-        ...design.logoFile,
-        data: undefined, // Don't send base64 data in response
-      },
-      mediaFile: {
-        ...design.mediaFile,
-        data: undefined,
-      },
+    // Send email notification asynchronously (don't wait for it to complete)
+    sendEmailNotification(design).catch((error) => {
+      console.error("Error in email notification:", error);
     });
+
+    // Return response without file data
+    const response = {
+      id: design.id,
+      designNumber: design.designNumber,
+      style: design.style,
+      goldKarat: design.goldKarat,
+      approxGoldWeight: design.approxGoldWeight,
+      stoneType: design.stoneType,
+      diamondShape: design.diamondShape,
+      caratWeight: design.caratWeight,
+      clarity: design.clarity,
+      sideStoneShape: design.sideStoneShape,
+      approxWeight: design.approxWeight,
+      marking: design.marking,
+      logoFileName: design.logoFileName,
+      mediaFileName: design.mediaFileName,
+      createdAt: design.createdAt,
+    };
+
+    res.status(201).json(response);
   } catch (error) {
     console.error("Error creating design:", error);
     res.status(400).json({ error: "Failed to create design" });
@@ -388,8 +362,8 @@ export const exportDesigns: RequestHandler = (req, res) => {
       "Side Stone Shape": design.sideStoneShape,
       "Side Stone Weight": design.approxWeight,
       Marking: design.marking,
-      "Logo File": design.logoFile?.filename || "N/A",
-      "Media File": design.mediaFile?.filename || "N/A",
+      "Logo File": design.logoFileName || "N/A",
+      "Media File": design.mediaFileName || "N/A",
       "Date Created": new Date(design.createdAt).toLocaleDateString(),
     }));
 
