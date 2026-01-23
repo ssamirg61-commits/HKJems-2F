@@ -9,6 +9,23 @@ import {
   deleteDesign,
   exportDesigns,
 } from "./routes/designs";
+import {
+  signup,
+  login,
+  getCurrentUser,
+  changePassword,
+  requestPasswordReset,
+  resetPassword,
+  getAllUsers,
+  updateUser,
+  deleteUser,
+  resetUserPassword,
+  initializeDefaultAdmin,
+} from "./routes/auth";
+import {
+  authenticateToken,
+  authorizeRole,
+} from "./middleware/auth";
 
 export function createServer() {
   const app = express();
