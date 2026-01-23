@@ -298,34 +298,59 @@ export default function Index() {
     setLoading(true);
 
     try {
-      const formDataToSubmit = new FormData();
+      // Convert files to base64
+      let logoDataUrl = logoPreview;
+      let mediaDataUrl = "";
+
+      if (formData.mediaFile) {
+        const reader = new FileReader();
+        await new Promise((resolve) => {
+          reader.onloadend = () => {
+            mediaDataUrl = reader.result as string;
+            resolve(null);
+          };
+          reader.readAsDataURL(formData.mediaFile);
+        });
+      }
+
+      const submitData: Record<string, string> = {};
 
       // Add form fields
       Object.entries(formData).forEach(([key, value]) => {
         if (key !== "logoFile" && key !== "mediaFile" && value) {
-          formDataToSubmit.append(key, value as string);
+          submitData[key] = value as string;
         }
       });
 
-      // Add files
-      if (formData.logoFile) {
-        formDataToSubmit.append("logoFile", formData.logoFile);
+      // Add file metadata and base64 data
+      if (logoFileName) {
+        submitData.logoFileName = logoFileName;
       }
-      if (formData.mediaFile) {
-        formDataToSubmit.append("mediaFile", formData.mediaFile);
+      if (logoDataUrl && logoDataUrl.startsWith("data:")) {
+        submitData.logoData = logoDataUrl;
+      }
+      if (mediaFileName) {
+        submitData.mediaFileName = mediaFileName;
+      }
+      if (mediaDataUrl) {
+        submitData.mediaData = mediaDataUrl;
       }
 
       const response = await fetch("/api/designs", {
         method: "POST",
-        body: formDataToSubmit,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(submitData),
       });
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || "Failed to submit");
+        const errorMessage =
+          errorData.errors && Array.isArray(errorData.errors)
+            ? errorData.errors.join(", ")
+            : errorData.error || "Failed to submit";
+        throw new Error(errorMessage);
       }
 
-      const result = await response.json();
       toast.success("Design submitted successfully!");
 
       // Reset form
