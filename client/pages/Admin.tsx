@@ -4,6 +4,13 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { Trash2, Edit2, Download } from "lucide-react";
 
+interface SideStone {
+  id: string;
+  description: string;
+  shape: string;
+  weight: string;
+}
+
 interface Design {
   id: string;
   designNumber: string;
@@ -14,8 +21,7 @@ interface Design {
   diamondShape: string;
   caratWeight: string;
   clarity: string;
-  sideStoneShape: string;
-  approxWeight: string;
+  sideStones: SideStone[];
   marking: string;
   logoFileName?: string;
   mediaFileName?: string;
@@ -24,7 +30,7 @@ interface Design {
 
 interface EditingDesign {
   id: string;
-  [key: string]: string;
+  [key: string]: any;
 }
 
 export default function Admin() {
@@ -53,7 +59,7 @@ export default function Admin() {
 
   const handleEdit = (design: Design) => {
     setEditingId(design.id);
-    const { id, logoData, createdAt, ...editableFields } = design;
+    const { id, createdAt, ...editableFields } = design;
     setEditingData({ id, ...editableFields });
   };
 
@@ -119,7 +125,7 @@ export default function Admin() {
     }
   };
 
-  const handleEditChange = (field: string, value: string) => {
+  const handleEditChange = (field: string, value: any) => {
     if (editingData) {
       setEditingData({ ...editingData, [field]: value });
     }
@@ -200,10 +206,16 @@ export default function Admin() {
                                 </h3>
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                   {Object.entries(editingData || {}).map(
-                                    ([key, value]) =>
-                                      key !== "id" &&
-                                      key !== "logoData" &&
-                                      key !== "mediaData" && (
+                                    ([key, value]) => {
+                                      if (
+                                        key === "id" ||
+                                        key === "sideStones" ||
+                                        key === "createdAt"
+                                      ) {
+                                        return null;
+                                      }
+
+                                      return (
                                         <div key={key}>
                                           <label className="block text-sm font-medium text-foreground mb-2">
                                             {key
@@ -224,9 +236,87 @@ export default function Admin() {
                                             className="w-full px-3 py-2 border border-input bg-card rounded text-sm focus:outline-none focus:ring-2 focus:ring-accent"
                                           />
                                         </div>
-                                      ),
+                                      );
+                                    },
                                   )}
                                 </div>
+
+                                {/* Side Stones Editor */}
+                                {editingData?.sideStones && (
+                                  <div className="mt-4 pt-4 border-t border-input">
+                                    <h4 className="font-medium text-foreground mb-3">
+                                      Side Stones
+                                    </h4>
+                                    <div className="space-y-3">
+                                      {editingData.sideStones.map(
+                                        (stone: SideStone, index: number) => (
+                                          <div
+                                            key={stone.id}
+                                            className="border border-input rounded p-3 bg-card"
+                                          >
+                                            <p className="text-sm font-medium text-foreground mb-2">
+                                              Side Stone {index + 1}
+                                            </p>
+                                            <div className="grid grid-cols-1 gap-2">
+                                              <input
+                                                type="text"
+                                                placeholder="Description"
+                                                value={stone.description}
+                                                onChange={(e) => {
+                                                  const updated = [
+                                                    ...editingData.sideStones,
+                                                  ];
+                                                  updated[index].description =
+                                                    e.target.value;
+                                                  handleEditChange(
+                                                    "sideStones",
+                                                    updated,
+                                                  );
+                                                }}
+                                                className="w-full px-2 py-1 border border-input bg-secondary rounded text-sm focus:outline-none focus:ring-2 focus:ring-accent"
+                                              />
+                                              <input
+                                                type="text"
+                                                placeholder="Shape"
+                                                value={stone.shape}
+                                                onChange={(e) => {
+                                                  const updated = [
+                                                    ...editingData.sideStones,
+                                                  ];
+                                                  updated[index].shape =
+                                                    e.target.value;
+                                                  handleEditChange(
+                                                    "sideStones",
+                                                    updated,
+                                                  );
+                                                }}
+                                                className="w-full px-2 py-1 border border-input bg-secondary rounded text-sm focus:outline-none focus:ring-2 focus:ring-accent"
+                                              />
+                                              <input
+                                                type="text"
+                                                placeholder="Weight"
+                                                value={stone.weight}
+                                                onChange={(e) => {
+                                                  const updated = [
+                                                    ...editingData.sideStones,
+                                                  ];
+                                                  updated[index].weight =
+                                                    e.target.value;
+                                                  handleEditChange(
+                                                    "sideStones",
+                                                    updated,
+                                                  );
+                                                }}
+                                                className="w-full px-2 py-1 border border-input bg-secondary rounded text-sm focus:outline-none focus:ring-2 focus:ring-accent"
+                                              />
+                                            </div>
+                                          </div>
+                                        ),
+                                      )}
+                                    </div>
+                                  </div>
+                                )}
+
                                 <div className="flex gap-2 justify-end pt-4 border-t border-input">
                                   <Button
                                     onClick={() => setEditingId(null)}
