@@ -323,6 +323,9 @@ export const createDesign: RequestHandler = (req, res) => {
 export const updateDesign: RequestHandler = (req, res) => {
   try {
     const { id } = req.params;
+    const userId = (req as any).userId;
+    const userRole = (req as any).userRole;
+
     const designIndex = designs.findIndex((d) => d.id === id);
 
     if (designIndex === -1) {
@@ -330,9 +333,22 @@ export const updateDesign: RequestHandler = (req, res) => {
       return;
     }
 
+    const design = designs[designIndex];
+
+    // Check authorization
+    if (userRole !== "ADMIN" && design.userId !== userId) {
+      res.status(403).json({
+        error: "You can only edit your own designs",
+      });
+      return;
+    }
+
     designs[designIndex] = {
       ...designs[designIndex],
       ...req.body,
+      userId: design.userId, // Prevent changing ownership
+      createdAt: design.createdAt, // Prevent changing creation date
+      updatedAt: new Date().toISOString(),
     };
 
     res.json(designs[designIndex]);
