@@ -16,9 +16,9 @@ interface Design {
   clarity: string;
   sideStoneShape: string;
   approxWeight: string;
-  brandText: string;
+  marking: string;
   logoFileName?: string;
-  logoData?: string;
+  mediaFileName?: string;
   createdAt: string;
 }
 
