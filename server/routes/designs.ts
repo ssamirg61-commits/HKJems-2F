@@ -361,10 +361,23 @@ export const updateDesign: RequestHandler = (req, res) => {
 export const deleteDesign: RequestHandler = (req, res) => {
   try {
     const { id } = req.params;
+    const userId = (req as any).userId;
+    const userRole = (req as any).userRole;
+
     const designIndex = designs.findIndex((d) => d.id === id);
 
     if (designIndex === -1) {
       res.status(404).json({ error: "Design not found" });
+      return;
+    }
+
+    const design = designs[designIndex];
+
+    // Check authorization
+    if (userRole !== "ADMIN" && design.userId !== userId) {
+      res.status(403).json({
+        error: "You can only delete your own designs",
+      });
       return;
     }
 
