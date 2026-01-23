@@ -2,7 +2,14 @@ import { useState, useEffect } from "react";
 import Layout from "@/components/Layout";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { X, Upload } from "lucide-react";
+import { X, Upload, Plus, Trash2 } from "lucide-react";
+
+interface SideStone {
+  id: string;
+  description: string;
+  shape: string;
+  weight: string;
+}
 
 interface FormData {
   designNumber: string;
@@ -13,8 +20,7 @@ interface FormData {
   diamondShape: string;
   caratWeight: string;
   clarity: string;
-  sideStoneShape: string;
-  approxWeight: string;
+  sideStones: SideStone[];
   marking: string;
   logoFile?: File;
   mediaFile?: File;
@@ -25,11 +31,8 @@ interface ValidationErrors {
 }
 
 const REQUIRED_TEXT_FIELDS = [
-  "designNumber",
   "approxGoldWeight",
   "caratWeight",
-  "approxWeight",
-  "marking",
 ];
 const REQUIRED_DROPDOWN_FIELDS = [
   "style",
@@ -37,9 +40,52 @@ const REQUIRED_DROPDOWN_FIELDS = [
   "stoneType",
   "diamondShape",
   "clarity",
-  "sideStoneShape",
 ];
 const REQUIRED_FILE_FIELDS = ["logoFile", "mediaFile"];
+
+const DIAMOND_SHAPES = [
+  "Round",
+  "Pear",
+  "Marquise",
+  "Asscher",
+  "Oval",
+  "Radiant",
+  "Emerald",
+  "Princess",
+  "Heart",
+  "Cushion",
+];
+
+const SIDE_STONE_SHAPES = [
+  "Straight Baguette",
+  "Tapered Baguette",
+  "Trapezoid",
+  "Triangle",
+  "Trillion",
+  "Half-Moon",
+  "Kite",
+  "Lozenge",
+  "Round",
+  "Pear",
+  "Marquise",
+  "Asscher",
+  "Oval",
+  "Radiant",
+  "Emerald",
+  "Princess",
+  "Heart",
+  "Cushion",
+];
+
+// Helper function to generate design number
+function generateDesignNumber(): string {
+  const now = new Date();
+  const yy = String(now.getFullYear()).slice(-2);
+  const mm = String(now.getMonth() + 1).padStart(2, "0");
+  const dd = String(now.getDate()).padStart(2, "0");
+  const rr = String(Math.floor(Math.random() * 100)).padStart(2, "0");
+  return `HK${yy}${mm}${dd}${rr}`;
+}
 
 export default function Index() {
   const [formData, setFormData] = useState<FormData>({
@@ -51,8 +97,14 @@ export default function Index() {
     diamondShape: "",
     caratWeight: "",
     clarity: "",
-    sideStoneShape: "",
-    approxWeight: "",
+    sideStones: [
+      {
+        id: "1",
+        description: "",
+        shape: "",
+        weight: "",
+      },
+    ],
     marking: "",
   });
 
@@ -65,27 +117,25 @@ export default function Index() {
   const [loading, setLoading] = useState(false);
   const [showReview, setShowReview] = useState(false);
   const [isFormDirty, setIsFormDirty] = useState(false);
-  const [originalFormData, setOriginalFormData] = useState<FormData>(
-    formData,
-  );
+
+  // Generate design number on mount
+  useEffect(() => {
+    const designNumber = generateDesignNumber();
+    setFormData((prev) => ({ ...prev, designNumber }));
+  }, []);
 
   const validateForm = (data: FormData, checkFiles = true): ValidationErrors => {
     const errors: ValidationErrors = {};
 
-    // Validate text fields
+    // Validate text fields (excluding design number)
     REQUIRED_TEXT_FIELDS.forEach((field) => {
       const value = data[field as keyof FormData];
       if (!value || (typeof value === "string" && value.trim() === "")) {
-        errors[field] = `${field === "marking" ? "Marking" : field.replace(/([A-Z])/g, " $1").replace(/^./, (c) => c.toUpperCase())} is required`;
+        errors[field] = `${field.replace(/([A-Z])/g, " $1").replace(/^./, (c) => c.toUpperCase())} is required`;
       }
     });
 
-    // Validate marking field length
-    if (data.marking && data.marking.length > 50) {
-      errors.marking = "Marking must not exceed 50 characters";
-    }
-
-    // Validate dropdowns (empty string is invalid)
+    // Validate dropdowns
     REQUIRED_DROPDOWN_FIELDS.forEach((field) => {
       const value = data[field as keyof FormData];
       if (!value || value === "") {
@@ -135,6 +185,46 @@ export default function Index() {
     }
 
     setValidationErrors(newErrors);
+  };
+
+  const handleSideStoneChange = (
+    id: string,
+    field: "description" | "shape" | "weight",
+    value: string,
+  ) => {
+    setFormData((prev) => ({
+      ...prev,
+      sideStones: prev.sideStones.map((stone) =>
+        stone.id === id ? { ...stone, [field]: value } : stone,
+      ),
+    }));
+    setIsFormDirty(true);
+  };
+
+  const addSideStone = () => {
+    if (formData.sideStones.length < 5) {
+      const newId = Date.now().toString();
+      setFormData((prev) => ({
+        ...prev,
+        sideStones: [
+          ...prev.sideStones,
+          { id: newId, description: "", shape: "", weight: "" },
+        ],
+      }));
+      setIsFormDirty(true);
+    } else {
+      toast.error("Maximum 5 side stone sections allowed");
+    }
+  };
+
+  const removeSideStone = (id: string) => {
+    if (formData.sideStones.length > 1) {
+      setFormData((prev) => ({
+        ...prev,
+        sideStones: prev.sideStones.filter((stone) => stone.id !== id),
+      }));
+      setIsFormDirty(true);
+    }
   };
 
   const handleLogoFileChange = (file: File | null) => {
@@ -313,14 +403,19 @@ export default function Index() {
         });
       }
 
-      const submitData: Record<string, string> = {};
+      const submitData: Record<string, any> = {};
 
       // Add form fields
-      Object.entries(formData).forEach(([key, value]) => {
-        if (key !== "logoFile" && key !== "mediaFile" && value) {
-          submitData[key] = value as string;
-        }
-      });
+      submitData.designNumber = formData.designNumber;
+      submitData.style = formData.style;
+      submitData.goldKarat = formData.goldKarat;
+      submitData.approxGoldWeight = formData.approxGoldWeight;
+      submitData.stoneType = formData.stoneType;
+      submitData.diamondShape = formData.diamondShape;
+      submitData.caratWeight = formData.caratWeight;
+      submitData.clarity = formData.clarity;
+      submitData.marking = formData.marking || "";
+      submitData.sideStones = formData.sideStones;
 
       // Add file metadata and base64 data
       if (logoFileName) {
@@ -354,8 +449,9 @@ export default function Index() {
       toast.success("Design submitted successfully!");
 
       // Reset form
+      const newDesignNumber = generateDesignNumber();
       const resetData: FormData = {
-        designNumber: "",
+        designNumber: newDesignNumber,
         style: "",
         goldKarat: "",
         approxGoldWeight: "",
@@ -363,12 +459,17 @@ export default function Index() {
         diamondShape: "",
         caratWeight: "",
         clarity: "",
-        sideStoneShape: "",
-        approxWeight: "",
+        sideStones: [
+          {
+            id: "1",
+            description: "",
+            shape: "",
+            weight: "",
+          },
+        ],
         marking: "",
       };
       setFormData(resetData);
-      setOriginalFormData(resetData);
       setLogoPreview("");
       setLogoFileName("");
       setMediaFileName("");
@@ -404,22 +505,13 @@ export default function Index() {
                   </label>
                   <input
                     type="text"
-                    name="designNumber"
                     value={formData.designNumber}
-                    onChange={handleInputChange}
-                    placeholder="Auto generated"
-                    className={`w-full px-3 py-2 border rounded text-sm focus:outline-none focus:ring-2 focus:ring-accent bg-card ${
-                      validationErrors.designNumber
-                        ? "border-red-500"
-                        : "border-input"
-                    }`}
-                    data-error-field="designNumber"
+                    disabled
+                    className="w-full px-3 py-2 border border-input bg-gray-100 rounded text-sm cursor-not-allowed opacity-60"
                   />
-                  {validationErrors.designNumber && (
-                    <p className="text-red-500 text-xs mt-1">
-                      {validationErrors.designNumber}
-                    </p>
-                  )}
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Auto-generated
+                  </p>
                 </div>
 
                 <div>
@@ -548,11 +640,11 @@ export default function Index() {
                     }`}
                   >
                     <option value="">Select Diamond Shape</option>
-                    <option value="Round">Round</option>
-                    <option value="Oval">Oval</option>
-                    <option value="Princess">Princess</option>
-                    <option value="Cushion">Cushion</option>
-                    <option value="Emerald">Emerald</option>
+                    {DIAMOND_SHAPES.map((shape) => (
+                      <option key={shape} value={shape}>
+                        {shape}
+                      </option>
+                    ))}
                   </select>
                   {validationErrors.diamondShape && (
                     <p className="text-red-500 text-xs mt-1">
@@ -616,61 +708,115 @@ export default function Index() {
               </div>
             </div>
 
-            {/* Side Stone Details Section */}
+            {/* Side Stone Details Section - Dynamic */}
             <div className="bg-card rounded-lg p-6 shadow-sm">
-              <h2 className="text-lg font-semibold text-foreground mb-6">
-                Side Stone Details
-              </h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm text-muted-foreground mb-2">
-                    Side Stone Shape <span className="text-red-500">*</span>
-                  </label>
-                  <select
-                    name="sideStoneShape"
-                    value={formData.sideStoneShape}
-                    onChange={handleInputChange}
-                    className={`w-full px-3 py-2 border rounded text-sm focus:outline-none focus:ring-2 focus:ring-accent bg-card ${
-                      validationErrors.sideStoneShape
-                        ? "border-red-500"
-                        : "border-input"
-                    }`}
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-lg font-semibold text-foreground">
+                  Side Stone Details
+                </h2>
+                {formData.sideStones.length < 5 && (
+                  <Button
+                    type="button"
+                    onClick={addSideStone}
+                    size="sm"
+                    variant="outline"
+                    className="flex items-center gap-1"
                   >
-                    <option value="">Select Shape</option>
-                    <option value="Round">Round</option>
-                    <option value="Baguette">Baguette</option>
-                    <option value="Tapered">Tapered</option>
-                    <option value="Princess">Princess</option>
-                  </select>
-                  {validationErrors.sideStoneShape && (
-                    <p className="text-red-500 text-xs mt-1">
-                      {validationErrors.sideStoneShape}
-                    </p>
-                  )}
-                </div>
+                    <Plus size={16} /> Add Side Stone
+                  </Button>
+                )}
+              </div>
 
-                <div>
-                  <label className="block text-sm text-muted-foreground mb-2">
-                    Approx Weight <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    name="approxWeight"
-                    value={formData.approxWeight}
-                    onChange={handleInputChange}
-                    placeholder="CT / MM"
-                    className={`w-full px-3 py-2 border rounded text-sm focus:outline-none focus:ring-2 focus:ring-accent bg-card ${
-                      validationErrors.approxWeight
-                        ? "border-red-500"
-                        : "border-input"
-                    }`}
-                  />
-                  {validationErrors.approxWeight && (
-                    <p className="text-red-500 text-xs mt-1">
-                      {validationErrors.approxWeight}
-                    </p>
-                  )}
-                </div>
+              <div className="space-y-6">
+                {formData.sideStones.map((stone, index) => (
+                  <div
+                    key={stone.id}
+                    className="border border-input rounded-lg p-4 bg-secondary"
+                  >
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className="text-sm font-medium text-foreground">
+                        Side Stone {index + 1}
+                      </h3>
+                      {index > 0 && (
+                        <Button
+                          type="button"
+                          onClick={() => removeSideStone(stone.id)}
+                          size="sm"
+                          variant="outline"
+                          className="text-destructive hover:text-destructive"
+                        >
+                          <Trash2 size={16} />
+                        </Button>
+                      )}
+                    </div>
+
+                    <div className="space-y-4">
+                      <div>
+                        <label className="block text-sm text-muted-foreground mb-2">
+                          Side Stone Description
+                        </label>
+                        <input
+                          type="text"
+                          value={stone.description}
+                          onChange={(e) =>
+                            handleSideStoneChange(
+                              stone.id,
+                              "description",
+                              e.target.value,
+                            )
+                          }
+                          placeholder="e.g., Additional details"
+                          className="w-full px-3 py-2 border border-input bg-card rounded text-sm focus:outline-none focus:ring-2 focus:ring-accent"
+                        />
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-sm text-muted-foreground mb-2">
+                            Side Stone Shape
+                          </label>
+                          <select
+                            value={stone.shape}
+                            onChange={(e) =>
+                              handleSideStoneChange(
+                                stone.id,
+                                "shape",
+                                e.target.value,
+                              )
+                            }
+                            className="w-full px-3 py-2 border border-input bg-card rounded text-sm focus:outline-none focus:ring-2 focus:ring-accent"
+                          >
+                            <option value="">Select Shape</option>
+                            {SIDE_STONE_SHAPES.map((shape) => (
+                              <option key={shape} value={shape}>
+                                {shape}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+
+                        <div>
+                          <label className="block text-sm text-muted-foreground mb-2">
+                            Approx Weight
+                          </label>
+                          <input
+                            type="text"
+                            value={stone.weight}
+                            onChange={(e) =>
+                              handleSideStoneChange(
+                                stone.id,
+                                "weight",
+                                e.target.value,
+                              )
+                            }
+                            placeholder="CT / MM"
+                            className="w-full px-3 py-2 border border-input bg-card rounded text-sm focus:outline-none focus:ring-2 focus:ring-accent"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
 
@@ -682,7 +828,7 @@ export default function Index() {
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm text-muted-foreground mb-2">
-                    Marking <span className="text-red-500">*</span>
+                    Marking
                   </label>
                   <div className="flex items-start gap-2">
                     <textarea
@@ -691,11 +837,7 @@ export default function Index() {
                       onChange={handleInputChange}
                       placeholder="Enter marking details (max 50 characters)"
                       maxLength={50}
-                      className={`flex-1 px-3 py-2 border rounded text-sm focus:outline-none focus:ring-2 focus:ring-accent bg-card resize-none ${
-                        validationErrors.marking
-                          ? "border-red-500"
-                          : "border-input"
-                      }`}
+                      className="flex-1 px-3 py-2 border border-input rounded text-sm focus:outline-none focus:ring-2 focus:ring-accent bg-card resize-none"
                       rows={3}
                     />
                   </div>
@@ -768,7 +910,9 @@ export default function Index() {
                       <img
                         src={logoPreview}
                         alt="Logo preview"
-                        className="max-h-32 max-w-full object-contain"
+                        className="max-h-32 max-w-full object-contain cursor-pointer hover:opacity-80"
+                        onClick={() => window.open(logoPreview, "_blank")}
+                        title="Click to open in new tab"
                       />
                     </div>
                   )}
@@ -781,8 +925,11 @@ export default function Index() {
               </div>
             </div>
 
-            {/* Media Upload Section */}
+            {/* Jewelry Sample Media Section */}
             <div className="bg-card rounded-lg p-6 shadow-sm">
+              <h2 className="text-lg font-semibold text-foreground mb-6">
+                Jewelry Sample Media
+              </h2>
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm text-muted-foreground mb-2">
@@ -891,7 +1038,9 @@ export default function Index() {
                         <label className="text-sm text-muted-foreground mb-2 block">
                           Design Number
                         </label>
-                        <p className="text-foreground">{formData.designNumber}</p>
+                        <p className="text-foreground">
+                          {formData.designNumber}
+                        </p>
                       </div>
                       <div>
                         <label className="text-sm text-muted-foreground mb-2 block">
@@ -952,27 +1101,53 @@ export default function Index() {
                   </div>
 
                   {/* Side Stone Details Section */}
-                  <div>
-                    <h3 className="font-semibold text-lg text-foreground mb-4">
-                      Side Stone Details
-                    </h3>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <div>
-                        <label className="text-sm text-muted-foreground mb-2 block">
-                          Side Stone Shape
-                        </label>
-                        <p className="text-foreground">
-                          {formData.sideStoneShape}
-                        </p>
-                      </div>
-                      <div>
-                        <label className="text-sm text-muted-foreground mb-2 block">
-                          Approx Weight
-                        </label>
-                        <p className="text-foreground">{formData.approxWeight}</p>
+                  {formData.sideStones.some(
+                    (s) => s.description || s.shape || s.weight,
+                  ) && (
+                    <div>
+                      <h3 className="font-semibold text-lg text-foreground mb-4">
+                        Side Stone Details
+                      </h3>
+                      <div className="space-y-4">
+                        {formData.sideStones.map((stone, index) => (
+                          (stone.description || stone.shape || stone.weight) && (
+                            <div
+                              key={stone.id}
+                              className="border border-input rounded p-3 bg-secondary"
+                            >
+                              <p className="text-sm font-medium text-foreground mb-2">
+                                Side Stone {index + 1}
+                              </p>
+                              {stone.description && (
+                                <p className="text-sm text-foreground">
+                                  <span className="text-muted-foreground">
+                                    Description:{" "}
+                                  </span>
+                                  {stone.description}
+                                </p>
+                              )}
+                              {stone.shape && (
+                                <p className="text-sm text-foreground">
+                                  <span className="text-muted-foreground">
+                                    Shape:{" "}
+                                  </span>
+                                  {stone.shape}
+                                </p>
+                              )}
+                              {stone.weight && (
+                                <p className="text-sm text-foreground">
+                                  <span className="text-muted-foreground">
+                                    Weight:{" "}
+                                  </span>
+                                  {stone.weight}
+                                </p>
+                              )}
+                            </div>
+                          )
+                        ))}
                       </div>
                     </div>
-                  </div>
+                  )}
 
                   {/* Marking & Stamping Section */}
                   <div>
@@ -980,14 +1155,16 @@ export default function Index() {
                       Marking & Stamping
                     </h3>
                     <div className="space-y-4">
-                      <div>
-                        <label className="text-sm text-muted-foreground mb-2 block">
-                          Marking
-                        </label>
-                        <p className="text-foreground whitespace-pre-wrap">
-                          {formData.marking}
-                        </p>
-                      </div>
+                      {formData.marking && (
+                        <div>
+                          <label className="text-sm text-muted-foreground mb-2 block">
+                            Marking
+                          </label>
+                          <p className="text-foreground whitespace-pre-wrap">
+                            {formData.marking}
+                          </p>
+                        </div>
+                      )}
                       {logoPreview && (
                         <div>
                           <label className="text-sm text-muted-foreground mb-2 block">
@@ -996,18 +1173,20 @@ export default function Index() {
                           <img
                             src={logoPreview}
                             alt="Logo preview"
-                            className="max-h-32 max-w-full object-contain"
+                            className="max-h-32 max-w-full object-contain cursor-pointer hover:opacity-80"
+                            onClick={() => window.open(logoPreview, "_blank")}
+                            title="Click to open in new tab"
                           />
                         </div>
                       )}
                     </div>
                   </div>
 
-                  {/* Media Upload Section */}
+                  {/* Jewelry Sample Media Section */}
                   {mediaFileName && (
                     <div>
                       <h3 className="font-semibold text-lg text-foreground mb-4">
-                        Media
+                        Jewelry Sample Media
                       </h3>
                       <div>
                         <label className="text-sm text-muted-foreground mb-2 block">
