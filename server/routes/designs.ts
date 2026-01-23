@@ -172,9 +172,20 @@ function validateFormData(formData: Record<string, any>): {
   };
 }
 
-export const getDesigns: RequestHandler = (_req, res) => {
+export const getDesigns: RequestHandler = (req, res) => {
+  const userId = (req as any).userId;
+  const userRole = (req as any).userRole;
+
+  // Filter designs based on user role
+  let filteredDesigns = designs;
+  if (userRole === "USER") {
+    // Users can only see their own designs
+    filteredDesigns = designs.filter((d) => d.userId === userId);
+  }
+  // ADMIN can see all designs
+
   // Return designs without large file data to keep response size reasonable
-  const designsWithoutData = designs.map((design) => ({
+  const designsWithoutData = filteredDesigns.map((design) => ({
     ...design,
     logoData: design.logoFileName ? "[Image Data]" : undefined,
     mediaData: design.mediaFileName ? "[Media Data]" : undefined,
