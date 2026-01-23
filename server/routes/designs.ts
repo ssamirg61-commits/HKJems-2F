@@ -269,6 +269,7 @@ export const createDesign: RequestHandler = (req, res) => {
 
     const design: Design = {
       id: generateId(),
+      userId,
       designNumber: designNumber || `HK-${Date.now()}`,
       style,
       goldKarat,
@@ -284,6 +285,7 @@ export const createDesign: RequestHandler = (req, res) => {
       mediaFileName,
       mediaData,
       createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
     };
 
     designs.push(design);
