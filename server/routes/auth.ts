@@ -51,9 +51,7 @@ export const signup: RequestHandler = (req, res) => {
 
     // Validate inputs
     if (!email || !name || !password) {
-      res
-        .status(400)
-        .json({ error: "Email, name, and password are required" });
+      res.status(400).json({ error: "Email, name, and password are required" });
       return;
     }
 

@@ -51,7 +51,8 @@ export function validatePassword(password: string): {
 }
 
 // Simple JWT-like token generation
-const SECRET_KEY = process.env.JWT_SECRET || "default-secret-key-change-in-prod";
+const SECRET_KEY =
+  process.env.JWT_SECRET || "default-secret-key-change-in-prod";
 
 export function generateToken(
   userId: string,

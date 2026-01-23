@@ -244,8 +244,10 @@ export const createDesign: RequestHandler = (req, res) => {
 
     // Validate file sizes
     if (logoData) {
-      const logoSize = Buffer.from(logoData.split(",")[1] || logoData, "base64")
-        .length;
+      const logoSize = Buffer.from(
+        logoData.split(",")[1] || logoData,
+        "base64",
+      ).length;
       if (logoSize > 10 * 1024 * 1024) {
         res.status(400).json({
           error: "Logo file exceeds 10MB limit",

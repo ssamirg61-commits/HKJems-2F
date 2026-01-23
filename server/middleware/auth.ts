@@ -61,11 +61,7 @@ export function authorizeRole(allowedRoles: ("USER" | "ADMIN")[]) {
 }
 
 // Optional authentication middleware (for endpoints that can work with or without auth)
-export function optionalAuth(
-  req: Request,
-  res: Response,
-  next: NextFunction,
-) {
+export function optionalAuth(req: Request, res: Response, next: NextFunction) {
   try {
     const authHeader = req.headers["authorization"];
     const token = authHeader && authHeader.split(" ")[1];

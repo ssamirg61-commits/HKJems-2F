@@ -22,10 +22,7 @@ import {
   resetUserPassword,
   initializeDefaultAdmin,
 } from "./routes/auth";
-import {
-  authenticateToken,
-  authorizeRole,
-} from "./middleware/auth";
+import { authenticateToken, authorizeRole } from "./middleware/auth";
 
 export function createServer() {
   const app = express();
