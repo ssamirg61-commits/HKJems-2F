@@ -10,6 +10,7 @@ import { ProtectedRoute, PublicRoute } from "@/components/ProtectedRoute";
 
 import Index from "./pages/Index";
 import Admin from "./pages/Admin";
+import AdminUsers from "./pages/AdminUsers";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import ForgotPassword from "./pages/ForgotPassword";
