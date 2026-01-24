@@ -39,6 +39,14 @@ export default function App() {
                 }
               />
               <Route
+                path="/"
+                element={
+                  <PublicRoute>
+                    <Login />
+                  </PublicRoute>
+                }
+              />
+              <Route
                 path="/signup"
                 element={
                   <PublicRoute>
@@ -56,20 +64,11 @@ export default function App() {
               />
 
               {/* Protected routes */}
-              {/* Default route shows the design page for authenticated users */}
               <Route
-                path="/"
+                path="/design"
                 element={
                   <ProtectedRoute>
                     <Index />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/my-designs"
-                element={
-                  <ProtectedRoute>
-                    <MyDesigns />
                   </ProtectedRoute>
                 }
               />
