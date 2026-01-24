@@ -75,7 +75,10 @@ export default function Admin() {
     try {
       const response = await fetch(`/api/designs/${editingData.id}`, {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
         body: JSON.stringify(editingData),
       });
 
