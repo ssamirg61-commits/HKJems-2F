@@ -70,6 +70,14 @@ export default function App() {
                   </ProtectedRoute>
                 }
               />
+              <Route
+                path="/admin/users"
+                element={
+                  <ProtectedRoute requiredRole="ADMIN">
+                    <AdminUsers />
+                  </ProtectedRoute>
+                }
+              />
 
               {/* Fallback */}
               <Route path="*" element={<NotFound />} />
