@@ -47,7 +47,11 @@ export default function Admin() {
 
   const fetchDesigns = async () => {
     try {
-      const response = await fetch("/api/designs");
+      const response = await fetch("/api/designs", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
       if (!response.ok) throw new Error("Failed to fetch");
       const data = await response.json();
       setDesigns(data);
