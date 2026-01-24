@@ -100,6 +100,9 @@ export default function Admin() {
     try {
       const response = await fetch(`/api/designs/${id}`, {
         method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
       });
 
       if (!response.ok) throw new Error("Failed to delete");
