@@ -42,8 +42,10 @@ export default function Admin() {
   const [editingData, setEditingData] = useState<EditingDesign | null>(null);
 
   useEffect(() => {
-    fetchDesigns();
-  }, []);
+    if (token) {
+      fetchDesigns();
+    }
+  }, [token]);
 
   const fetchDesigns = async () => {
     try {
