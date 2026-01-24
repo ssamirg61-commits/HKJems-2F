@@ -41,6 +41,22 @@ export function createServer() {
   app.use(express.json({ limit: "50mb" }));
   app.use(express.urlencoded({ extended: true, limit: "50mb" }));
 
+  // Health check for database (useful for Vercel deployments)
+  app.get("/api/db-health", async (_req, res) => {
+    try {
+      const conn = await connectDB();
+      res.status(200).json({
+        ok: true,
+        readyState: conn.readyState, // 1 = connected
+        // hosts property may vary by driver version; include only when available
+        hosts: (conn as any).hosts ?? (conn as any).host ?? null,
+      });
+    } catch (err: any) {
+      console.error("DB health check failed:", err);
+      res.status(500).json({ ok: false, message: err?.message ?? String(err) });
+    }
+  });
+
   // Example API routes
   app.get("/api/ping", (_req, res) => {
     const ping = process.env.PING_MESSAGE ?? "ping";
