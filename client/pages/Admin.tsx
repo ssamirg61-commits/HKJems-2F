@@ -35,6 +35,7 @@ interface EditingDesign {
 }
 
 export default function Admin() {
+  const { token } = useAuth();
   const [designs, setDesigns] = useState<Design[]>([]);
   const [loading, setLoading] = useState(true);
   const [editingId, setEditingId] = useState<string | null>(null);
