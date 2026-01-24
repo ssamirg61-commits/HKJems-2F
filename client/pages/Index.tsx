@@ -89,6 +89,7 @@ function generateDesignNumber(): string {
 }
 
 export default function Index() {
+  const { user, token } = useAuth();
   const [formData, setFormData] = useState<FormData>({
     designNumber: "",
     style: "",
