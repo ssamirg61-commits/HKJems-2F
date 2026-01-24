@@ -33,6 +33,17 @@ export default function AdminUsers() {
   const [resetPassword, setResetPassword] = useState("");
   const [resetPasswordError, setResetPasswordError] = useState("");
 
+  // Add user state
+  const [showAddUser, setShowAddUser] = useState(false);
+  const [newUser, setNewUser] = useState({
+    name: "",
+    email: "",
+    phone: "",
+    password: "",
+    role: "USER" as "USER" | "ADMIN",
+  });
+  const [newUserError, setNewUserError] = useState<string | null>(null);
+
   useEffect(() => {
     if (token) {
       fetchUsers();
@@ -165,6 +176,52 @@ export default function AdminUsers() {
     }
   };
 
+  const handleAddUser = async () => {
+    setNewUserError(null);
+
+    // Basic validation
+    if (!newUser.name || !newUser.email || !newUser.password) {
+      setNewUserError("Name, email and password are required");
+      return;
+    }
+
+    // Password rules as used elsewhere
+    const errors = [] as string[];
+    if (newUser.password.length < 8) errors.push("At least 8 characters");
+    if (!/[A-Z]/.test(newUser.password)) errors.push("One uppercase letter");
+    if (!/[0-9]/.test(newUser.password)) errors.push("One number");
+    if (!/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(newUser.password))
+      errors.push("One special character");
+
+    if (errors.length > 0) {
+      setNewUserError(`Password must have: ${errors.join(", ")}`);
+      return;
+    }
+
+    try {
+      const response = await fetch("/api/users", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(newUser),
+      });
+
+      if (!response.ok) {
+        const err = await response.json().catch(() => ({}));
+        throw new Error(err.error || "Failed to create user");
+      }
+
+      toast.success("User created successfully");
+      setShowAddUser(false);
+      setNewUser({ name: "", email: "", phone: "", password: "", role: "USER" });
+      fetchUsers();
+    } catch (error: any) {
+      toast.error(error.message || "Failed to create user");
+    }
+  };
+
   if (loading) {
     return (
       <Layout>
@@ -185,13 +242,81 @@ export default function AdminUsers() {
             </h1>
             <Button
               className="bg-accent text-accent-foreground hover:opacity-90 flex items-center gap-2"
-              disabled
-              title="User creation coming soon"
+              onClick={() => setShowAddUser(true)}
             >
               <Plus size={18} />
               Add User
             </Button>
           </div>
+
+          {showAddUser && (
+            <div className="bg-card rounded-lg p-6 mb-8 border border-input">
+              <h2 className="text-xl font-semibold mb-4">Add New User</h2>
+              {newUserError && (
+                <div className="text-red-500 text-sm mb-2">{newUserError}</div>
+              )}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-foreground mb-2">Name</label>
+                  <input
+                    type="text"
+                    value={newUser.name}
+                    onChange={(e) => setNewUser({ ...newUser, name: e.target.value })}
+                    className="w-full px-3 py-2 border border-input bg-card rounded text-sm focus:outline-none focus:ring-2 focus:ring-accent"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-foreground mb-2">Email</label>
+                  <input
+                    type="email"
+                    value={newUser.email}
+                    onChange={(e) => setNewUser({ ...newUser, email: e.target.value })}
+                    className="w-full px-3 py-2 border border-input bg-card rounded text-sm focus:outline-none focus:ring-2 focus:ring-accent"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-foreground mb-2">Phone</label>
+                  <input
+                    type="tel"
+                    value={newUser.phone}
+                    onChange={(e) => setNewUser({ ...newUser, phone: e.target.value })}
+                    className="w-full px-3 py-2 border border-input bg-card rounded text-sm focus:outline-none focus:ring-2 focus:ring-accent"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-foreground mb-2">Password</label>
+                  <input
+                    type="password"
+                    value={newUser.password}
+                    onChange={(e) => setNewUser({ ...newUser, password: e.target.value })}
+                    className="w-full px-3 py-2 border border-input bg-card rounded text-sm focus:outline-none focus:ring-2 focus:ring-accent"
+                  />
+                  <p className="text-xs text-muted-foreground mt-2">
+                    At least 8 chars, with uppercase, number, and special character
+                  </p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-foreground mb-2">Role</label>
+                  <select
+                    value={newUser.role}
+                    onChange={(e) => setNewUser({ ...newUser, role: e.target.value as any })}
+                    className="w-full px-3 py-2 border border-input bg-card rounded text-sm focus:outline-none focus:ring-2 focus:ring-accent"
+                  >
+                    <option value="USER">USER</option>
+                    <option value="ADMIN">ADMIN</option>
+                  </select>
+                </div>
+              </div>
+              <div className="flex gap-2 justify-end pt-4">
+                <Button variant="outline" onClick={() => { setShowAddUser(false); setNewUserError(null); }}>
+                  Cancel
+                </Button>
+                <Button className="bg-accent text-accent-foreground hover:opacity-90" onClick={handleAddUser}>
+                  Create User
+                </Button>
+              </div>
+            </div>
+          )}
 
           {users.length === 0 ? (
             <div className="bg-card rounded-lg p-8 text-center">

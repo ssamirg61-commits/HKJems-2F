@@ -15,6 +15,8 @@ import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import ForgotPassword from "./pages/ForgotPassword";
 import NotFound from "./pages/NotFound";
+import MyDesigns from "./pages/MyDesigns";
+import DesignDetails from "./pages/DesignDetails";
 
 const queryClient = new QueryClient();
 
@@ -54,11 +56,28 @@ export default function App() {
               />
 
               {/* Protected routes */}
+              {/* Default route shows the design page for authenticated users */}
               <Route
                 path="/"
                 element={
-                  <ProtectedRoute requiredRole="USER">
+                  <ProtectedRoute>
                     <Index />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/my-designs"
+                element={
+                  <ProtectedRoute>
+                    <MyDesigns />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/my-designs/:id"
+                element={
+                  <ProtectedRoute>
+                    <DesignDetails />
                   </ProtectedRoute>
                 }
               />

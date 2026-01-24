@@ -39,7 +39,7 @@ export default function Header() {
                 {/* Role-based navigation */}
                 {user.role === "USER" && (
                   <Link
-                    to="/"
+                    to="/my-designs"
                     className="text-xs md:text-sm hover:opacity-80 transition-opacity font-medium"
                   >
                     My Designs

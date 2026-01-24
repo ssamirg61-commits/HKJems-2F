@@ -1,5 +1,5 @@
-import { RequestHandler } from "express";
-import * as XLSX from "xlsx";
+  { RequestHandler } from "express";
+  * as XLSX from "xlsx";
 
 // Simple ID generator
 function generateId() {
@@ -40,19 +40,11 @@ let designs: Design[] = [];
 // Helper function to send email notification
 async function sendEmailNotification(design: Design): Promise<void> {
   try {
-    const gmailUser = process.env.GMAIL_USER;
-    const gmailPassword = process.env.GMAIL_APP_PASSWORD;
     const webhookUrl = process.env.WEBHOOK_URL;
-
-    if (!gmailUser && !webhookUrl) {
-      console.warn(
-        "Email configuration not set. Please set GMAIL_USER and GMAIL_APP_PASSWORD or WEBHOOK_URL.",
-      );
-      return;
-    }
 
     // Build email content with all form data
     const emailContent = {
+      from: "no-replay@hkjewel.co",
       to: "akira@hkjewel.co",
       subject: `New Jewelry Design Submission - ${design.designNumber}`,
       designData: {
@@ -85,7 +77,7 @@ async function sendEmailNotification(design: Design): Promise<void> {
       },
     };
 
-    // Try webhook first
+    // Prefer webhook (no password in this app)
     if (webhookUrl) {
       try {
         const response = await fetch(webhookUrl, {
@@ -107,13 +99,18 @@ async function sendEmailNotification(design: Design): Promise<void> {
       } catch (error) {
         console.warn("Webhook email failed:", error);
       }
+    } else {
+      console.warn(
+        "No WEBHOOK_URL configured. Email will not be sent. Logging details only.",
+      );
     }
 
-    // Log email details for debugging
+    // Log email details for debugging when not sent
     console.log(
-      `Email service not fully configured. Email details for ${design.designNumber}:`,
+      `Email details for ${design.designNumber}:`,
       {
-        to: "akira@hkjewel.co",
+        from: emailContent.from,
+        to: emailContent.to,
         subject: emailContent.subject,
         filesCount: [
           design.logoFileName ? 1 : 0,

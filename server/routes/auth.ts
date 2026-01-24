@@ -374,6 +374,69 @@ export const updateUser: RequestHandler = (req, res) => {
 };
 
 // Admin: Delete user
+// Admin: Create user
+export const createUser: RequestHandler = (req, res) => {
+  try {
+    const requesterRole = (req as any).userRole;
+
+    if (requesterRole !== "ADMIN") {
+      res.status(403).json({ error: "Unauthorized" });
+      return;
+    }
+
+    const { name, email, phone, password, role } = req.body;
+
+    if (!name || !email || !password) {
+      res
+        .status(400)
+        .json({ error: "Name, email and password are required" });
+      return;
+    }
+
+    if (users.some((u) => u.email === email)) {
+      res.status(400).json({ error: "User with this email already exists" });
+      return;
+    }
+
+    const passwordValidation = validatePassword(password);
+    if (!passwordValidation.valid) {
+      res.status(400).json({
+        error: "Password validation failed",
+        details: passwordValidation.errors,
+      });
+      return;
+    }
+
+    const newUser: User = {
+      id: "user_" + Date.now(),
+      email,
+      name,
+      phone,
+      passwordHash: hashPassword(password),
+      role: role === "ADMIN" ? "ADMIN" : "USER",
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      isActive: true,
+    };
+
+    users.push(newUser);
+
+    res.status(201).json({
+      id: newUser.id,
+      email: newUser.email,
+      name: newUser.name,
+      role: newUser.role,
+      phone: newUser.phone,
+      isActive: newUser.isActive,
+      createdAt: newUser.createdAt,
+      updatedAt: newUser.updatedAt,
+    });
+  } catch (error) {
+    console.error("Create user error:", error);
+    res.status(500).json({ error: "Failed to create user" });
+  }
+};
+
 export const deleteUser: RequestHandler = (req, res) => {
   try {
     const { userId } = req.params;

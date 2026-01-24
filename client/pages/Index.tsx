@@ -344,6 +344,8 @@ export default function Index() {
     } else {
       handleMediaFileChange(file || null);
     }
+    // Allow reselecting the same file by clearing the input value
+    e.currentTarget.value = "";
   };
 
   const handleDragOver = (e: React.DragEvent) => {

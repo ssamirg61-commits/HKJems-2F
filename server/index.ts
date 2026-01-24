@@ -21,6 +21,7 @@ import {
   deleteUser,
   resetUserPassword,
   initializeDefaultAdmin,
+  createUser,
 } from "./routes/auth";
 import { authenticateToken, authorizeRole } from "./middleware/auth";
 
@@ -59,6 +60,12 @@ export function createServer() {
     authenticateToken,
     authorizeRole(["ADMIN"]),
     getAllUsers,
+  );
+  app.post(
+    "/api/users",
+    authenticateToken,
+    authorizeRole(["ADMIN"]),
+    createUser,
   );
   app.put(
     "/api/users/:userId",

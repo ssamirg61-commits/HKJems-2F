@@ -45,7 +45,10 @@ export default function Login() {
     try {
       await login(email, password);
       toast.success("Login successful!");
-      navigate("/");
+      // Redirect based on role: admins to /admin, users to /
+      const storedUser = localStorage.getItem("auth_user");
+      const role = storedUser ? (JSON.parse(storedUser).role as "USER" | "ADMIN") : "USER";
+      navigate(role === "ADMIN" ? "/admin" : "/");
     } catch (error) {
       const message = error instanceof Error ? error.message : "Login failed";
       setErrors({ general: message });
