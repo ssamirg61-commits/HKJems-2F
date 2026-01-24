@@ -3,6 +3,7 @@ import Layout from "@/components/Layout";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { Trash2, Edit2, Download } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface SideStone {
   id: string;
