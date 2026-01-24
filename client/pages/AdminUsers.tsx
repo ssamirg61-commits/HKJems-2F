@@ -27,7 +27,9 @@ export default function AdminUsers() {
   const [loading, setLoading] = useState(true);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingData, setEditingData] = useState<EditingUser | null>(null);
-  const [showResetPassword, setShowResetPassword] = useState<string | null>(null);
+  const [showResetPassword, setShowResetPassword] = useState<string | null>(
+    null,
+  );
   const [resetPassword, setResetPassword] = useState("");
   const [resetPasswordError, setResetPasswordError] = useState("");
 
@@ -88,8 +90,7 @@ export default function AdminUsers() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!window.confirm("Are you sure you want to delete this user?"))
-      return;
+    if (!window.confirm("Are you sure you want to delete this user?")) return;
 
     try {
       const response = await fetch(`/api/users/${id}`, {
@@ -227,7 +228,10 @@ export default function AdminUsers() {
                   </thead>
                   <tbody className="divide-y divide-input">
                     {users.map((user) => (
-                      <tr key={user.id} className="hover:bg-secondary transition-colors">
+                      <tr
+                        key={user.id}
+                        className="hover:bg-secondary transition-colors"
+                      >
                         {editingId === user.id ? (
                           <>
                             <td colSpan={7} className="px-6 py-4">
@@ -258,7 +262,10 @@ export default function AdminUsers() {
                                       type="email"
                                       value={editingData?.email || ""}
                                       onChange={(e) =>
-                                        handleEditChange("email", e.target.value)
+                                        handleEditChange(
+                                          "email",
+                                          e.target.value,
+                                        )
                                       }
                                       className="w-full px-3 py-2 border border-input bg-card rounded text-sm focus:outline-none focus:ring-2 focus:ring-accent"
                                     />
@@ -272,7 +279,10 @@ export default function AdminUsers() {
                                       type="tel"
                                       value={editingData?.phone || ""}
                                       onChange={(e) =>
-                                        handleEditChange("phone", e.target.value)
+                                        handleEditChange(
+                                          "phone",
+                                          e.target.value,
+                                        )
                                       }
                                       className="w-full px-3 py-2 border border-input bg-card rounded text-sm focus:outline-none focus:ring-2 focus:ring-accent"
                                     />
@@ -283,7 +293,11 @@ export default function AdminUsers() {
                                       Status
                                     </label>
                                     <select
-                                      value={editingData?.isActive ? "active" : "inactive"}
+                                      value={
+                                        editingData?.isActive
+                                          ? "active"
+                                          : "inactive"
+                                      }
                                       onChange={(e) =>
                                         handleEditChange(
                                           "isActive",
@@ -347,8 +361,8 @@ export default function AdminUsers() {
                                     </p>
                                   )}
                                   <p className="text-xs text-muted-foreground mt-2">
-                                    Must be at least 8 characters with uppercase,
-                                    number, and special character
+                                    Must be at least 8 characters with
+                                    uppercase, number, and special character
                                   </p>
                                 </div>
 
