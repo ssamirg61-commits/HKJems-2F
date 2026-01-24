@@ -1,4 +1,5 @@
 import { RequestHandler } from "express";
+import { UserModel } from "../models/User";
 import {
   hashPassword,
   verifyPassword,
@@ -9,59 +10,40 @@ import {
   verifyOTP,
 } from "../utils/auth";
 
-export interface User {
-  id: string;
-  email: string;
-  name: string;
-  phone?: string;
-  passwordHash: string;
-  role: "USER" | "ADMIN";
-  createdAt: string;
-  updatedAt: string;
-  isActive: boolean;
-}
+// Initialize default admin if not exists (Mongo-backed)
+export async function initializeDefaultAdmin() {
+  const adminEmail = "akira@hkjewel.co";
+  const adminExists = await UserModel.findOne({ email: adminEmail }).lean();
 
-// In-memory user storage (replace with database in production)
-export let users: User[] = [];
+  if (adminExists) return;
 
-// Initialize default admin if not exists
-export function initializeDefaultAdmin() {
-  const adminExists = users.some((u) => u.email === "akira@hkjewel.co");
+  await UserModel.create({
+    email: adminEmail,
+    name: "Admin",
+    passwordHash: hashPassword("Admin@123"),
+    role: "ADMIN",
+    isActive: true,
+  });
 
-  if (!adminExists) {
-    const adminUser: User = {
-      id: "admin_" + Date.now(),
-      email: "akira@hkjewel.co",
-      name: "Admin",
-      passwordHash: hashPassword("Admin@123"),
-      role: "ADMIN",
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-      isActive: true,
-    };
-    users.push(adminUser);
-    console.log("Default admin account created: akira@hkjewel.co / Admin@123");
-  }
+  console.log("Default admin account created: akira@hkjewel.co / Admin@123");
 }
 
 // Signup endpoint
-export const signup: RequestHandler = (req, res) => {
+export const signup: RequestHandler = async (req, res) => {
   try {
     const { email, name, password, phone } = req.body;
 
-    // Validate inputs
     if (!email || !name || !password) {
       res.status(400).json({ error: "Email, name, and password are required" });
       return;
     }
 
-    // Check if user already exists
-    if (users.some((u) => u.email === email)) {
+    const existing = await UserModel.findOne({ email }).lean();
+    if (existing) {
       res.status(400).json({ error: "User with this email already exists" });
       return;
     }
 
-    // Validate password
     const passwordValidation = validatePassword(password);
     if (!passwordValidation.valid) {
       res.status(400).json({
@@ -71,22 +53,15 @@ export const signup: RequestHandler = (req, res) => {
       return;
     }
 
-    // Create new user
-    const newUser: User = {
-      id: "user_" + Date.now(),
+    const newUser = await UserModel.create({
       email,
       name,
       phone,
       passwordHash: hashPassword(password),
       role: "USER",
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
       isActive: true,
-    };
+    });
 
-    users.push(newUser);
-
-    // Generate token
     const token = generateToken(newUser.id, newUser.role);
 
     res.status(201).json({
@@ -105,19 +80,16 @@ export const signup: RequestHandler = (req, res) => {
 };
 
 // Login endpoint
-export const login: RequestHandler = (req, res) => {
+export const login: RequestHandler = async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    // Validate inputs
     if (!email || !password) {
       res.status(400).json({ error: "Email and password are required" });
       return;
     }
 
-    // Find user
-    const user = users.find((u) => u.email === email);
-
+    const user = await UserModel.findOne({ email });
     if (!user || !verifyPassword(password, user.passwordHash)) {
       res.status(401).json({ error: "Invalid email or password" });
       return;
@@ -128,7 +100,6 @@ export const login: RequestHandler = (req, res) => {
       return;
     }
 
-    // Generate token
     const token = generateToken(user.id, user.role);
 
     res.json({
@@ -147,12 +118,11 @@ export const login: RequestHandler = (req, res) => {
 };
 
 // Get current user
-export const getCurrentUser: RequestHandler = (req, res) => {
+export const getCurrentUser: RequestHandler = async (req, res) => {
   try {
     const userId = (req as any).userId;
-    const role = (req as any).userRole;
 
-    const user = users.find((u) => u.id === userId);
+    const user = await UserModel.findById(userId).lean();
 
     if (!user) {
       res.status(404).json({ error: "User not found" });
@@ -160,7 +130,7 @@ export const getCurrentUser: RequestHandler = (req, res) => {
     }
 
     res.json({
-      id: user.id,
+      id: user._id.toString(),
       email: user.email,
       name: user.name,
       role: user.role,
@@ -172,7 +142,7 @@ export const getCurrentUser: RequestHandler = (req, res) => {
 };
 
 // Change password
-export const changePassword: RequestHandler = (req, res) => {
+export const changePassword: RequestHandler = async (req, res) => {
   try {
     const { currentPassword, newPassword } = req.body;
     const userId = (req as any).userId;
@@ -184,20 +154,17 @@ export const changePassword: RequestHandler = (req, res) => {
       return;
     }
 
-    const user = users.find((u) => u.id === userId);
-
+    const user = await UserModel.findById(userId);
     if (!user) {
       res.status(404).json({ error: "User not found" });
       return;
     }
 
-    // Verify current password
     if (!verifyPassword(currentPassword, user.passwordHash)) {
       res.status(401).json({ error: "Current password is incorrect" });
       return;
     }
 
-    // Validate new password
     const passwordValidation = validatePassword(newPassword);
     if (!passwordValidation.valid) {
       res.status(400).json({
@@ -207,9 +174,9 @@ export const changePassword: RequestHandler = (req, res) => {
       return;
     }
 
-    // Update password
     user.passwordHash = hashPassword(newPassword);
-    user.updatedAt = new Date().toISOString();
+    user.updatedAt = new Date();
+    await user.save();
 
     res.json({ message: "Password changed successfully" });
   } catch (error) {
@@ -219,7 +186,7 @@ export const changePassword: RequestHandler = (req, res) => {
 };
 
 // Request password reset (send OTP)
-export const requestPasswordReset: RequestHandler = (req, res) => {
+export const requestPasswordReset: RequestHandler = async (req, res) => {
   try {
     const { email } = req.body;
 
@@ -228,26 +195,20 @@ export const requestPasswordReset: RequestHandler = (req, res) => {
       return;
     }
 
-    const user = users.find((u) => u.email === email);
+    const user = await UserModel.findOne({ email }).lean();
 
     if (!user) {
-      // Don't reveal if user exists for security
-      res.json({
-        message: "If this email exists, an OTP has been sent",
-      });
+      res.json({ message: "If this email exists, an OTP has been sent" });
       return;
     }
 
-    // Generate and store OTP
     const otp = generateOTP();
     setOTP(email, otp);
 
-    // In production, send via email or SMS
     console.log(`Password reset OTP for ${email}: ${otp}`);
 
     res.json({
       message: "OTP sent to your email/phone",
-      // In development, return OTP for testing (remove in production)
       ...(process.env.NODE_ENV === "development" && { otp }),
     });
   } catch (error) {
@@ -257,7 +218,7 @@ export const requestPasswordReset: RequestHandler = (req, res) => {
 };
 
 // Reset password with OTP
-export const resetPassword: RequestHandler = (req, res) => {
+export const resetPassword: RequestHandler = async (req, res) => {
   try {
     const { email, otp, newPassword } = req.body;
 
@@ -268,21 +229,17 @@ export const resetPassword: RequestHandler = (req, res) => {
       return;
     }
 
-    // Verify OTP
     if (!verifyOTP(email, otp)) {
       res.status(401).json({ error: "Invalid or expired OTP" });
       return;
     }
 
-    // Find user
-    const user = users.find((u) => u.email === email);
-
+    const user = await UserModel.findOne({ email });
     if (!user) {
       res.status(404).json({ error: "User not found" });
       return;
     }
 
-    // Validate new password
     const passwordValidation = validatePassword(newPassword);
     if (!passwordValidation.valid) {
       res.status(400).json({
@@ -292,9 +249,9 @@ export const resetPassword: RequestHandler = (req, res) => {
       return;
     }
 
-    // Update password
     user.passwordHash = hashPassword(newPassword);
-    user.updatedAt = new Date().toISOString();
+    user.updatedAt = new Date();
+    await user.save();
 
     res.json({ message: "Password reset successfully" });
   } catch (error) {
@@ -304,7 +261,7 @@ export const resetPassword: RequestHandler = (req, res) => {
 };
 
 // Admin: Get all users
-export const getAllUsers: RequestHandler = (req, res) => {
+export const getAllUsers: RequestHandler = async (req, res) => {
   try {
     const role = (req as any).userRole;
 
@@ -313,18 +270,20 @@ export const getAllUsers: RequestHandler = (req, res) => {
       return;
     }
 
-    const userList = users.map((u) => ({
-      id: u.id,
-      email: u.email,
-      name: u.name,
-      phone: u.phone,
-      role: u.role,
-      isActive: u.isActive,
-      createdAt: u.createdAt,
-      updatedAt: u.updatedAt,
-    }));
+    const userList = await UserModel.find().lean();
 
-    res.json(userList);
+    res.json(
+      userList.map((u) => ({
+        id: u._id.toString(),
+        email: u.email,
+        name: u.name,
+        phone: u.phone,
+        role: u.role,
+        isActive: u.isActive,
+        createdAt: u.createdAt,
+        updatedAt: u.updatedAt,
+      })),
+    );
   } catch (error) {
     console.error("Get all users error:", error);
     res.status(500).json({ error: "Failed to get users" });
@@ -332,7 +291,7 @@ export const getAllUsers: RequestHandler = (req, res) => {
 };
 
 // Admin: Update user
-export const updateUser: RequestHandler = (req, res) => {
+export const updateUser: RequestHandler = async (req, res) => {
   try {
     const { userId } = req.params;
     const { name, email, phone, isActive } = req.body;
@@ -343,22 +302,27 @@ export const updateUser: RequestHandler = (req, res) => {
       return;
     }
 
-    const user = users.find((u) => u.id === userId);
-
+    const user = await UserModel.findById(userId);
     if (!user) {
       res.status(404).json({ error: "User not found" });
       return;
     }
 
-    // Update fields
-    if (name) user.name = name;
-    if (email && !users.some((u) => u.id !== userId && u.email === email)) {
+    if (email) {
+      const emailTaken = await UserModel.findOne({ email, _id: { $ne: userId } });
+      if (emailTaken) {
+        res.status(400).json({ error: "User with this email already exists" });
+        return;
+      }
       user.email = email;
     }
+
+    if (name) user.name = name;
     if (phone) user.phone = phone;
     if (isActive !== undefined) user.isActive = isActive;
 
-    user.updatedAt = new Date().toISOString();
+    user.updatedAt = new Date();
+    await user.save();
 
     res.json({
       id: user.id,
@@ -375,7 +339,7 @@ export const updateUser: RequestHandler = (req, res) => {
 
 // Admin: Delete user
 // Admin: Create user
-export const createUser: RequestHandler = (req, res) => {
+export const createUser: RequestHandler = async (req, res) => {
   try {
     const requesterRole = (req as any).userRole;
 
@@ -393,7 +357,8 @@ export const createUser: RequestHandler = (req, res) => {
       return;
     }
 
-    if (users.some((u) => u.email === email)) {
+    const existing = await UserModel.findOne({ email }).lean();
+    if (existing) {
       res.status(400).json({ error: "User with this email already exists" });
       return;
     }
@@ -407,19 +372,14 @@ export const createUser: RequestHandler = (req, res) => {
       return;
     }
 
-    const newUser: User = {
-      id: "user_" + Date.now(),
+    const newUser = await UserModel.create({
       email,
       name,
       phone,
       passwordHash: hashPassword(password),
       role: role === "ADMIN" ? "ADMIN" : "USER",
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
       isActive: true,
-    };
-
-    users.push(newUser);
+    });
 
     res.status(201).json({
       id: newUser.id,
@@ -437,7 +397,7 @@ export const createUser: RequestHandler = (req, res) => {
   }
 };
 
-export const deleteUser: RequestHandler = (req, res) => {
+export const deleteUser: RequestHandler = async (req, res) => {
   try {
     const { userId } = req.params;
     const requesterRole = (req as any).userRole;
@@ -447,20 +407,18 @@ export const deleteUser: RequestHandler = (req, res) => {
       return;
     }
 
-    const userIndex = users.findIndex((u) => u.id === userId);
-
-    if (userIndex === -1) {
+    const user = await UserModel.findById(userId);
+    if (!user) {
       res.status(404).json({ error: "User not found" });
       return;
     }
 
-    // Prevent deleting the default admin
-    if (users[userIndex].email === "akira@hkjewel.co") {
+    if (user.email === "akira@hkjewel.co") {
       res.status(400).json({ error: "Cannot delete default admin account" });
       return;
     }
 
-    users.splice(userIndex, 1);
+    await user.deleteOne();
 
     res.json({ message: "User deleted successfully" });
   } catch (error) {
@@ -470,7 +428,7 @@ export const deleteUser: RequestHandler = (req, res) => {
 };
 
 // Admin: Reset user password
-export const resetUserPassword: RequestHandler = (req, res) => {
+export const resetUserPassword: RequestHandler = async (req, res) => {
   try {
     const { userId } = req.params;
     const { newPassword } = req.body;
@@ -486,14 +444,12 @@ export const resetUserPassword: RequestHandler = (req, res) => {
       return;
     }
 
-    const user = users.find((u) => u.id === userId);
-
+    const user = await UserModel.findById(userId);
     if (!user) {
       res.status(404).json({ error: "User not found" });
       return;
     }
 
-    // Validate password
     const passwordValidation = validatePassword(newPassword);
     if (!passwordValidation.valid) {
       res.status(400).json({
@@ -504,7 +460,8 @@ export const resetUserPassword: RequestHandler = (req, res) => {
     }
 
     user.passwordHash = hashPassword(newPassword);
-    user.updatedAt = new Date().toISOString();
+    user.updatedAt = new Date();
+    await user.save();
 
     res.json({ message: "User password reset successfully" });
   } catch (error) {

@@ -1,6 +1,7 @@
 import "dotenv/config";
 import express from "express";
 import cors from "cors";
+import { connectDB } from "./db";
 import { handleDemo } from "./routes/demo";
 import {
   getDesigns,
@@ -25,11 +26,15 @@ import {
 } from "./routes/auth";
 import { authenticateToken, authorizeRole } from "./middleware/auth";
 
+// Kick off database connection once for both edge/serverless environments
+connectDB()
+  .then(() => initializeDefaultAdmin())
+  .catch((err) => {
+    console.error("Database initialization failed", err);
+  });
+
 export function createServer() {
   const app = express();
-
-  // Initialize default admin
-  initializeDefaultAdmin();
 
   // Middleware
   app.use(cors());

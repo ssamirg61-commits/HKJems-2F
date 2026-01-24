@@ -1,50 +1,14 @@
-import { RequestHandler } from "express";
+﻿import { RequestHandler } from "express";
 import * as XLSX from "xlsx";
-
-// Simple ID generator
-function generateId() {
-  return Date.now().toString(36) + Math.random().toString(36).substr(2);
-}
-
-interface SideStone {
-  id: string;
-  description: string;
-  shape: string;
-  weight: string;
-}
-
-interface Design {
-  id: string;
-  userId: string; // Link to user who created the design
-  designNumber: string;
-  style: string;
-  goldKarat: string;
-  approxGoldWeight: string;
-  stoneType: string;
-  diamondShape: string;
-  caratWeight: string;
-  clarity: string;
-  sideStones: SideStone[];
-  marking: string;
-  logoFileName?: string;
-  logoData?: string;
-  mediaFileName?: string;
-  mediaData?: string;
-  createdAt: string;
-  updatedAt: string;
-}
-
-// In-memory storage
-let designs: Design[] = [];
+import { DesignModel, IDesign } from "../models/Design";
 
 // Helper function to send email notification
-async function sendEmailNotification(design: Design): Promise<void> {
+async function sendEmailNotification(design: IDesign): Promise<void> {
   try {
     const webhookUrl = process.env.WEBHOOK_URL;
 
-    // Build email content with all form data
     const emailContent = {
-      from: "no-replay@hkjewel.co",
+      from: "no-reply@hkjewel.co",
       to: "akira@hkjewel.co",
       subject: `New Jewelry Design Submission - ${design.designNumber}`,
       designData: {
@@ -63,21 +27,14 @@ async function sendEmailNotification(design: Design): Promise<void> {
       },
       files: {
         logo: design.logoFileName
-          ? {
-              filename: design.logoFileName,
-              data: design.logoData,
-            }
+          ? { filename: design.logoFileName, data: design.logoData }
           : null,
         media: design.mediaFileName
-          ? {
-              filename: design.mediaFileName,
-              data: design.mediaData,
-            }
+          ? { filename: design.mediaFileName, data: design.mediaData }
           : null,
       },
     };
 
-    // Prefer webhook (no password in this app)
     if (webhookUrl) {
       try {
         const response = await fetch(webhookUrl, {
@@ -105,26 +62,20 @@ async function sendEmailNotification(design: Design): Promise<void> {
       );
     }
 
-    // Log email details for debugging when not sent
-    console.log(
-      `Email details for ${design.designNumber}:`,
-      {
-        from: emailContent.from,
-        to: emailContent.to,
-        subject: emailContent.subject,
-        filesCount: [
-          design.logoFileName ? 1 : 0,
-          design.mediaFileName ? 1 : 0,
-        ].reduce((a, b) => a + b, 0),
-      },
-    );
+    console.log(`Email details for ${design.designNumber}:`, {
+      from: emailContent.from,
+      to: emailContent.to,
+      subject: emailContent.subject,
+      filesCount: [design.logoFileName ? 1 : 0, design.mediaFileName ? 1 : 0].reduce(
+        (a, b) => a + b,
+        0,
+      ),
+    });
   } catch (error) {
     console.error("Error sending email notification:", error);
-    // Don't throw - email failure shouldn't block form submission
   }
 }
 
-// Validate required fields
 function validateFormData(formData: Record<string, any>): {
   valid: boolean;
   errors: string[];
@@ -140,21 +91,18 @@ function validateFormData(formData: Record<string, any>): {
     "clarity",
   ];
 
-  // Check required text fields
   requiredTextFields.forEach((field) => {
     if (!formData[field] || formData[field].toString().trim() === "") {
       errors.push(`${field} is required`);
     }
   });
 
-  // Check required dropdowns
   requiredDropdownFields.forEach((field) => {
     if (!formData[field] || formData[field].toString().trim() === "") {
       errors.push(`${field} is required`);
     }
   });
 
-  // Check file uploads
   if (!formData.mediaFileName) {
     errors.push("Media file is required");
   }
@@ -165,28 +113,30 @@ function validateFormData(formData: Record<string, any>): {
   };
 }
 
-export const getDesigns: RequestHandler = (req, res) => {
-  const userId = (req as any).userId;
-  const userRole = (req as any).userRole;
+export const getDesigns: RequestHandler = async (req, res) => {
+  try {
+    const userId = (req as any).userId;
+    const userRole = (req as any).userRole;
 
-  // Filter designs based on user role
-  let filteredDesigns = designs;
-  if (userRole === "USER") {
-    // Users can only see their own designs
-    filteredDesigns = designs.filter((d) => d.userId === userId);
+    const query = userRole === "USER" ? { userId } : {};
+    const designs = await DesignModel.find(query).lean();
+
+    const designsWithoutData = designs.map((design) => ({
+      ...design,
+      id: design._id.toString(),
+      logoData: design.logoFileName ? "[Image Data]" : undefined,
+      mediaData: design.mediaFileName ? "[Media Data]" : undefined,
+      _id: undefined,
+    }));
+
+    res.json(designsWithoutData);
+  } catch (error) {
+    console.error("Error fetching designs:", error);
+    res.status(400).json({ error: "Failed to fetch designs" });
   }
-  // ADMIN can see all designs
-
-  // Return designs without large file data to keep response size reasonable
-  const designsWithoutData = filteredDesigns.map((design) => ({
-    ...design,
-    logoData: design.logoFileName ? "[Image Data]" : undefined,
-    mediaData: design.mediaFileName ? "[Media Data]" : undefined,
-  }));
-  res.json(designsWithoutData);
 };
 
-export const createDesign: RequestHandler = (req, res) => {
+export const createDesign: RequestHandler = async (req, res) => {
   try {
     const userId = (req as any).userId;
 
@@ -212,7 +162,6 @@ export const createDesign: RequestHandler = (req, res) => {
       mediaData,
     } = req.body;
 
-    // Validate required fields
     const formData = {
       designNumber,
       style,
@@ -228,42 +177,27 @@ export const createDesign: RequestHandler = (req, res) => {
 
     const validation = validateFormData(formData);
     if (!validation.valid) {
-      res.status(400).json({
-        error: "Validation failed",
-        errors: validation.errors,
-      });
+      res.status(400).json({ error: "Validation failed", errors: validation.errors });
       return;
     }
 
-    // Validate file sizes
     if (logoData) {
-      const logoSize = Buffer.from(
-        logoData.split(",")[1] || logoData,
-        "base64",
-      ).length;
+      const logoSize = Buffer.from(logoData.split(",")[1] || logoData, "base64").length;
       if (logoSize > 10 * 1024 * 1024) {
-        res.status(400).json({
-          error: "Logo file exceeds 10MB limit",
-        });
+        res.status(400).json({ error: "Logo file exceeds 10MB limit" });
         return;
       }
     }
 
     if (mediaData) {
-      const mediaSize = Buffer.from(
-        mediaData.split(",")[1] || mediaData,
-        "base64",
-      ).length;
+      const mediaSize = Buffer.from(mediaData.split(",")[1] || mediaData, "base64").length;
       if (mediaSize > 100 * 1024 * 1024) {
-        res.status(400).json({
-          error: "Media file exceeds 100MB limit",
-        });
+        res.status(400).json({ error: "Media file exceeds 100MB limit" });
         return;
       }
     }
 
-    const design: Design = {
-      id: generateId(),
+    const designDoc = await DesignModel.create({
       userId,
       designNumber: designNumber || `HK-${Date.now()}`,
       style,
@@ -279,33 +213,27 @@ export const createDesign: RequestHandler = (req, res) => {
       logoData,
       mediaFileName,
       mediaData,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
+    });
 
-    designs.push(design);
-
-    // Send email notification asynchronously (don't wait for it to complete)
-    sendEmailNotification(design).catch((error) => {
+    sendEmailNotification(designDoc).catch((error) => {
       console.error("Error in email notification:", error);
     });
 
-    // Return response without file data
     const response = {
-      id: design.id,
-      designNumber: design.designNumber,
-      style: design.style,
-      goldKarat: design.goldKarat,
-      approxGoldWeight: design.approxGoldWeight,
-      stoneType: design.stoneType,
-      diamondShape: design.diamondShape,
-      caratWeight: design.caratWeight,
-      clarity: design.clarity,
-      sideStones: design.sideStones,
-      marking: design.marking,
-      logoFileName: design.logoFileName,
-      mediaFileName: design.mediaFileName,
-      createdAt: design.createdAt,
+      id: designDoc.id,
+      designNumber: designDoc.designNumber,
+      style: designDoc.style,
+      goldKarat: designDoc.goldKarat,
+      approxGoldWeight: designDoc.approxGoldWeight,
+      stoneType: designDoc.stoneType,
+      diamondShape: designDoc.diamondShape,
+      caratWeight: designDoc.caratWeight,
+      clarity: designDoc.clarity,
+      sideStones: designDoc.sideStones,
+      marking: designDoc.marking,
+      logoFileName: designDoc.logoFileName,
+      mediaFileName: designDoc.mediaFileName,
+      createdAt: designDoc.createdAt,
     };
 
     res.status(201).json(response);
@@ -315,87 +243,93 @@ export const createDesign: RequestHandler = (req, res) => {
   }
 };
 
-export const updateDesign: RequestHandler = (req, res) => {
+export const updateDesign: RequestHandler = async (req, res) => {
   try {
     const { id } = req.params;
     const userId = (req as any).userId;
     const userRole = (req as any).userRole;
 
-    const designIndex = designs.findIndex((d) => d.id === id);
-
-    if (designIndex === -1) {
+    const design = await DesignModel.findById(id);
+    if (!design) {
       res.status(404).json({ error: "Design not found" });
       return;
     }
 
-    const design = designs[designIndex];
-
-    // Check authorization
     if (userRole !== "ADMIN" && design.userId !== userId) {
-      res.status(403).json({
-        error: "You can only edit your own designs",
-      });
+      res.status(403).json({ error: "You can only edit your own designs" });
       return;
     }
 
-    designs[designIndex] = {
-      ...designs[designIndex],
+    const updates = {
       ...req.body,
-      userId: design.userId, // Prevent changing ownership
-      createdAt: design.createdAt, // Prevent changing creation date
-      updatedAt: new Date().toISOString(),
+      userId: design.userId,
+      designNumber: design.designNumber,
+      createdAt: design.createdAt,
+      updatedAt: new Date(),
     };
 
-    res.json(designs[designIndex]);
+    const updated = await DesignModel.findByIdAndUpdate(id, updates, {
+      new: true,
+    }).lean();
+
+    if (!updated) {
+      res.status(404).json({ error: "Design not found after update" });
+      return;
+    }
+
+    res.json({
+      ...updated,
+      id: updated._id.toString(),
+      _id: undefined,
+    });
   } catch (error) {
     console.error("Error updating design:", error);
     res.status(400).json({ error: "Failed to update design" });
   }
 };
 
-export const deleteDesign: RequestHandler = (req, res) => {
+export const deleteDesign: RequestHandler = async (req, res) => {
   try {
     const { id } = req.params;
     const userId = (req as any).userId;
     const userRole = (req as any).userRole;
 
-    const designIndex = designs.findIndex((d) => d.id === id);
-
-    if (designIndex === -1) {
+    const design = await DesignModel.findById(id);
+    if (!design) {
       res.status(404).json({ error: "Design not found" });
       return;
     }
 
-    const design = designs[designIndex];
-
-    // Check authorization
     if (userRole !== "ADMIN" && design.userId !== userId) {
-      res.status(403).json({
-        error: "You can only delete your own designs",
-      });
+      res.status(403).json({ error: "You can only delete your own designs" });
       return;
     }
 
-    const deleted = designs.splice(designIndex, 1);
-    res.json(deleted[0]);
+    await design.deleteOne();
+
+    res.json({
+      id: design.id,
+      designNumber: design.designNumber,
+      message: "Design deleted",
+    });
   } catch (error) {
     console.error("Error deleting design:", error);
     res.status(400).json({ error: "Failed to delete design" });
   }
 };
 
-export const exportDesigns: RequestHandler = (req, res) => {
+export const exportDesigns: RequestHandler = async (_req, res) => {
   try {
+    const designs = await DesignModel.find().lean();
+
     if (designs.length === 0) {
       res.status(400).json({ error: "No designs to export" });
       return;
     }
 
-    // Prepare data for Excel export
     const exportData: Record<string, any>[] = [];
 
     designs.forEach((design) => {
-      // Create base row for each design
       const baseRow = {
         "Design #": design.designNumber,
         Style: design.style,
@@ -411,7 +345,6 @@ export const exportDesigns: RequestHandler = (req, res) => {
         "Date Created": new Date(design.createdAt).toLocaleDateString(),
       };
 
-      // Add side stone data (up to 5 columns)
       for (let i = 0; i < 5; i++) {
         const stone = design.sideStones[i];
         if (stone) {
@@ -428,26 +361,23 @@ export const exportDesigns: RequestHandler = (req, res) => {
       exportData.push(baseRow);
     });
 
-    // Create workbook and worksheet
     const worksheet = XLSX.utils.json_to_sheet(exportData);
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, "Jewelry Designs");
 
-    // Set column widths for better readability
     const columns = [
-      { wch: 12 }, // Design #
-      { wch: 12 }, // Style
-      { wch: 12 }, // Gold Karat
-      { wch: 14 }, // Gold Weight
-      { wch: 12 }, // Stone Type
-      { wch: 15 }, // Diamond Shape
-      { wch: 12 }, // Carat Weight
-      { wch: 10 }, // Clarity
-      { wch: 15 }, // Marking
-      { wch: 15 }, // Logo File
-      { wch: 15 }, // Media File
-      { wch: 14 }, // Date Created
-      // Side Stones (3 columns × 5 = 15)
+      { wch: 12 },
+      { wch: 12 },
+      { wch: 12 },
+      { wch: 14 },
+      { wch: 12 },
+      { wch: 15 },
+      { wch: 12 },
+      { wch: 10 },
+      { wch: 15 },
+      { wch: 15 },
+      { wch: 15 },
+      { wch: 14 },
       { wch: 25 },
       { wch: 15 },
       { wch: 12 },
@@ -466,10 +396,8 @@ export const exportDesigns: RequestHandler = (req, res) => {
     ];
     worksheet["!cols"] = columns;
 
-    // Generate as base64 string
     const wbout = XLSX.write(workbook, { bookType: "xlsx", type: "base64" });
 
-    // Send as download
     res.setHeader(
       "Content-Disposition",
       `attachment; filename="jewelry-designs-${new Date().toISOString().split("T")[0]}.xlsx"`,

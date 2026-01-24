@@ -4,7 +4,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ProtectedRoute, PublicRoute } from "@/components/ProtectedRoute";
 
@@ -38,14 +38,7 @@ export default function App() {
                   </PublicRoute>
                 }
               />
-              <Route
-                path="/"
-                element={
-                  <PublicRoute>
-                    <Login />
-                  </PublicRoute>
-                }
-              />
+              <Route path="/" element={<Navigate to="/login" replace />} />
               <Route
                 path="/signup"
                 element={
@@ -98,7 +91,7 @@ export default function App() {
               />
 
               {/* Fallback */}
-              <Route path="*" element={<NotFound />} />
+              <Route path="*" element={<Navigate to="/login" replace />} />
             </Routes>
           </BrowserRouter>
         </AuthProvider>
