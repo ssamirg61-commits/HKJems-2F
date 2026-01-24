@@ -117,7 +117,11 @@ export default function Admin() {
 
   const handleExport = async () => {
     try {
-      const response = await fetch("/api/designs/export");
+      const response = await fetch("/api/designs/export", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
       if (!response.ok) throw new Error("Failed to export");
 
       const blob = await response.blob();
