@@ -39,7 +39,7 @@ const REQUIRED_DROPDOWN_FIELDS = [
   "diamondShape",
   "clarity",
 ];
-const REQUIRED_FILE_FIELDS = ["logoFile", "mediaFile"];
+const REQUIRED_FILE_FIELDS = ["mediaFile"];
 
 const DIAMOND_SHAPES = [
   "Round",
@@ -157,9 +157,6 @@ export default function Index() {
     // Validate files only during final submission
     if (checkFiles) {
       REQUIRED_FILE_FIELDS.forEach((field) => {
-        if (field === "logoFile" && !logoFileName) {
-          errors[field] = "Logo file is required";
-        }
         if (field === "mediaFile" && !mediaFileName) {
           errors[field] = "Media file is required";
         }
@@ -880,7 +877,7 @@ export default function Index() {
 
                 <div>
                   <label className="block text-sm text-muted-foreground mb-2">
-                    Logo Upload <span className="text-red-500">*</span>
+                    Logo Upload
                   </label>
                   <div
                     onDragOver={handleDragOver}

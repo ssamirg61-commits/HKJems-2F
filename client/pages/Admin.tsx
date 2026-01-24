@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import Layout from "@/components/Layout";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { Trash2, Edit2, Download } from "lucide-react";
+import { Trash2, Edit2, Download, RefreshCcw } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 
 interface SideStone {
@@ -38,6 +38,7 @@ export default function Admin() {
   const { token } = useAuth();
   const [designs, setDesigns] = useState<Design[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingData, setEditingData] = useState<EditingDesign | null>(null);
 
@@ -62,6 +63,7 @@ export default function Admin() {
       console.error(error);
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
   };
 
@@ -167,13 +169,27 @@ export default function Admin() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center mb-8">
             <h1 className="text-3xl font-bold text-foreground">Admin Portal</h1>
-            <Button
-              onClick={handleExport}
-              className="bg-accent text-accent-foreground hover:opacity-90 flex items-center gap-2"
-            >
-              <Download size={18} />
-              Export to Excel
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setRefreshing(true);
+                  fetchDesigns();
+                }}
+                disabled={refreshing}
+                className="flex items-center gap-2"
+                title="Refresh"
+              >
+                <RefreshCcw size={16} /> {refreshing ? "Refreshing..." : "Refresh"}
+              </Button>
+              <Button
+                onClick={handleExport}
+                className="bg-accent text-accent-foreground hover:opacity-90 flex items-center gap-2"
+              >
+                <Download size={18} />
+                Export to Excel
+              </Button>
+            </div>
           </div>
 
           {designs.length === 0 ? (

@@ -1,5 +1,5 @@
-  { RequestHandler } from "express";
-  * as XLSX from "xlsx";
+import { RequestHandler } from "express";
+import * as XLSX from "xlsx";
 
 // Simple ID generator
 function generateId() {
@@ -155,10 +155,6 @@ function validateFormData(formData: Record<string, any>): {
   });
 
   // Check file uploads
-  if (!formData.logoFileName) {
-    errors.push("Logo file is required");
-  }
-
   if (!formData.mediaFileName) {
     errors.push("Media file is required");
   }
