@@ -126,6 +126,13 @@ export default function Index() {
     setFormData((prev) => ({ ...prev, designNumber }));
   }, []);
 
+  // Verify token is available
+  useEffect(() => {
+    if (!token) {
+      toast.error("Authentication required");
+    }
+  }, [token]);
+
   const validateForm = (data: FormData, checkFiles = true): ValidationErrors => {
     const errors: ValidationErrors = {};
 
