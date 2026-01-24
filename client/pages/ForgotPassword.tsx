@@ -289,7 +289,10 @@ export default function ForgotPassword() {
           )}
 
           <div className="mt-6">
-            <Link to="/login" className="text-sm text-accent hover:text-accent/90 text-center block">
+            <Link
+              to="/login"
+              className="text-sm text-accent hover:text-accent/90 text-center block"
+            >
               Back to Login
             </Link>
           </div>

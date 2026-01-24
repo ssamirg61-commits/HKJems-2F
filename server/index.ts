@@ -22,10 +22,7 @@ import {
   resetUserPassword,
   initializeDefaultAdmin,
 } from "./routes/auth";
-import {
-  authenticateToken,
-  authorizeRole,
-} from "./middleware/auth";
+import { authenticateToken, authorizeRole } from "./middleware/auth";
 
 export function createServer() {
   const app = express();
@@ -57,7 +54,12 @@ export function createServer() {
   app.post("/api/auth/change-password", authenticateToken, changePassword);
 
   // Admin user management routes
-  app.get("/api/users", authenticateToken, authorizeRole(["ADMIN"]), getAllUsers);
+  app.get(
+    "/api/users",
+    authenticateToken,
+    authorizeRole(["ADMIN"]),
+    getAllUsers,
+  );
   app.put(
     "/api/users/:userId",
     authenticateToken,
@@ -79,7 +81,12 @@ export function createServer() {
 
   // Design routes with authentication
   app.get("/api/designs", authenticateToken, getDesigns);
-  app.get("/api/designs/export", authenticateToken, authorizeRole(["ADMIN"]), exportDesigns);
+  app.get(
+    "/api/designs/export",
+    authenticateToken,
+    authorizeRole(["ADMIN"]),
+    exportDesigns,
+  );
   app.post("/api/designs", authenticateToken, createDesign);
   app.put("/api/designs/:id", authenticateToken, updateDesign);
   app.delete("/api/designs/:id", authenticateToken, deleteDesign);

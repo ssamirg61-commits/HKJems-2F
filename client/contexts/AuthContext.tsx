@@ -1,4 +1,10 @@
-import React, { createContext, useState, useContext, useEffect, ReactNode } from "react";
+import React, {
+  createContext,
+  useState,
+  useContext,
+  useEffect,
+  ReactNode,
+} from "react";
 
 export interface User {
   id: string;
@@ -13,11 +19,23 @@ interface AuthContextType {
   loading: boolean;
   error: string | null;
   login: (email: string, password: string) => Promise<void>;
-  signup: (email: string, name: string, password: string, phone?: string) => Promise<void>;
+  signup: (
+    email: string,
+    name: string,
+    password: string,
+    phone?: string,
+  ) => Promise<void>;
   logout: () => void;
-  changePassword: (currentPassword: string, newPassword: string) => Promise<void>;
+  changePassword: (
+    currentPassword: string,
+    newPassword: string,
+  ) => Promise<void>;
   requestPasswordReset: (email: string) => Promise<void>;
-  resetPassword: (email: string, otp: string, newPassword: string) => Promise<void>;
+  resetPassword: (
+    email: string,
+    otp: string,
+    newPassword: string,
+  ) => Promise<void>;
   clearError: () => void;
 }
 
@@ -109,7 +127,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     localStorage.removeItem("auth_user");
   };
 
-  const changePassword = async (currentPassword: string, newPassword: string) => {
+  const changePassword = async (
+    currentPassword: string,
+    newPassword: string,
+  ) => {
     try {
       setError(null);
       const response = await fetch("/api/auth/change-password", {
@@ -126,7 +147,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         throw new Error(data.error || "Password change failed");
       }
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Password change failed";
+      const message =
+        err instanceof Error ? err.message : "Password change failed";
       setError(message);
       throw err;
     }
@@ -152,7 +174,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const resetPassword = async (email: string, otp: string, newPassword: string) => {
+  const resetPassword = async (
+    email: string,
+    otp: string,
+    newPassword: string,
+  ) => {
     try {
       setError(null);
       const response = await fetch("/api/auth/reset-password", {
@@ -166,7 +192,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         throw new Error(data.error || "Password reset failed");
       }
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Password reset failed";
+      const message =
+        err instanceof Error ? err.message : "Password reset failed";
       setError(message);
       throw err;
     }

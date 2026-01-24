@@ -47,8 +47,7 @@ export default function Login() {
       toast.success("Login successful!");
       navigate("/");
     } catch (error) {
-      const message =
-        error instanceof Error ? error.message : "Login failed";
+      const message = error instanceof Error ? error.message : "Login failed";
       setErrors({ general: message });
       toast.error(message);
     } finally {
@@ -64,7 +63,9 @@ export default function Login() {
             <h1 className="text-3xl font-bold text-foreground">
               Jewelry Design Portal
             </h1>
-            <p className="text-muted-foreground mt-2">Sign in to your account</p>
+            <p className="text-muted-foreground mt-2">
+              Sign in to your account
+            </p>
           </div>
 
           {errors.general && (
