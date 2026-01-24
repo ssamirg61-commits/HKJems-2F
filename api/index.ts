@@ -1,5 +1,6 @@
+import serverless from 'serverless-http';
 import { createServer } from '../server';
 
-const server = createServer();
+const app = createServer();
 
-export default server;
+export default serverless(app);

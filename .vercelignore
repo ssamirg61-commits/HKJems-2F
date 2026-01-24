@@ -1,0 +1,13 @@
+.git
+.gitignore
+node_modules
+.env.local
+.env.*.local
+*.log
+*.tgz
+dist
+.DS_Store
+.cache
+.next
+out
+.vercel
