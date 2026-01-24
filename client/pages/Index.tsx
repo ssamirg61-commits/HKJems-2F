@@ -3,6 +3,7 @@ import Layout from "@/components/Layout";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { X, Upload, Plus, Trash2 } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface SideStone {
   id: string;
@@ -30,7 +31,10 @@ interface ValidationErrors {
   [key: string]: string;
 }
 
-const REQUIRED_TEXT_FIELDS = ["approxGoldWeight", "caratWeight"];
+const REQUIRED_TEXT_FIELDS = [
+  "approxGoldWeight",
+  "caratWeight",
+];
 const REQUIRED_DROPDOWN_FIELDS = [
   "style",
   "goldKarat",
@@ -121,18 +125,14 @@ export default function Index() {
     setFormData((prev) => ({ ...prev, designNumber }));
   }, []);
 
-  const validateForm = (
-    data: FormData,
-    checkFiles = true,
-  ): ValidationErrors => {
+  const validateForm = (data: FormData, checkFiles = true): ValidationErrors => {
     const errors: ValidationErrors = {};
 
     // Validate text fields (excluding design number)
     REQUIRED_TEXT_FIELDS.forEach((field) => {
       const value = data[field as keyof FormData];
       if (!value || (typeof value === "string" && value.trim() === "")) {
-        errors[field] =
-          `${field.replace(/([A-Z])/g, " $1").replace(/^./, (c) => c.toUpperCase())} is required`;
+        errors[field] = `${field.replace(/([A-Z])/g, " $1").replace(/^./, (c) => c.toUpperCase())} is required`;
       }
     });
 
@@ -140,8 +140,7 @@ export default function Index() {
     REQUIRED_DROPDOWN_FIELDS.forEach((field) => {
       const value = data[field as keyof FormData];
       if (!value || value === "") {
-        errors[field] =
-          `Please select a ${field.replace(/([A-Z])/g, " $1").toLowerCase()}`;
+        errors[field] = `Please select a ${field.replace(/([A-Z])/g, " $1").toLowerCase()}`;
       }
     });
 
@@ -161,9 +160,7 @@ export default function Index() {
   };
 
   const handleInputChange = (
-    e: React.ChangeEvent<
-      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
-    >,
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>,
   ) => {
     const { name, value } = e.target;
 
@@ -176,7 +173,10 @@ export default function Index() {
     setIsFormDirty(true);
 
     // Real-time validation
-    const errors = validateForm({ ...formData, [name]: value }, false);
+    const errors = validateForm(
+      { ...formData, [name]: value },
+      false,
+    );
     const newErrors = { ...validationErrors };
 
     if (errors[name]) {
@@ -279,19 +279,8 @@ export default function Index() {
     }
 
     // Validate file type
-    const validImageTypes = [
-      "image/png",
-      "image/jpeg",
-      "image/jpg",
-      "image/gif",
-      "image/webp",
-    ];
-    const validVideoTypes = [
-      "video/mp4",
-      "video/quicktime",
-      "video/x-msvideo",
-      "video/webm",
-    ];
+    const validImageTypes = ["image/png", "image/jpeg", "image/jpg", "image/gif", "image/webp"];
+    const validVideoTypes = ["video/mp4", "video/quicktime", "video/x-msvideo", "video/webm"];
     const isValidType =
       validImageTypes.includes(file.type) ||
       validVideoTypes.includes(file.type);
@@ -342,7 +331,10 @@ export default function Index() {
     e.stopPropagation();
   };
 
-  const handleDrop = (e: React.DragEvent, isLogo: boolean) => {
+  const handleDrop = (
+    e: React.DragEvent,
+    isLogo: boolean,
+  ) => {
     e.preventDefault();
     e.stopPropagation();
 
@@ -973,8 +965,8 @@ export default function Index() {
                         {" or drag and drop"}
                       </div>
                       <p className="text-xs text-muted-foreground">
-                        Images (PNG, JPEG, GIF, WebP) or Videos (MP4, MOV, AVI,
-                        WebM) up to 100 MB
+                        Images (PNG, JPEG, GIF, WebP) or Videos (MP4, MOV,
+                        AVI, WebM) up to 100 MB
                       </p>
                     </label>
                   </div>
@@ -1098,9 +1090,7 @@ export default function Index() {
                         <label className="text-sm text-muted-foreground mb-2 block">
                           Carat Weight
                         </label>
-                        <p className="text-foreground">
-                          {formData.caratWeight}
-                        </p>
+                        <p className="text-foreground">{formData.caratWeight}</p>
                       </div>
                       <div>
                         <label className="text-sm text-muted-foreground mb-2 block">
@@ -1120,45 +1110,42 @@ export default function Index() {
                         Side Stone Details
                       </h3>
                       <div className="space-y-4">
-                        {formData.sideStones.map(
-                          (stone, index) =>
-                            (stone.description ||
-                              stone.shape ||
-                              stone.weight) && (
-                              <div
-                                key={stone.id}
-                                className="border border-input rounded p-3 bg-secondary"
-                              >
-                                <p className="text-sm font-medium text-foreground mb-2">
-                                  Side Stone {index + 1}
+                        {formData.sideStones.map((stone, index) => (
+                          (stone.description || stone.shape || stone.weight) && (
+                            <div
+                              key={stone.id}
+                              className="border border-input rounded p-3 bg-secondary"
+                            >
+                              <p className="text-sm font-medium text-foreground mb-2">
+                                Side Stone {index + 1}
+                              </p>
+                              {stone.description && (
+                                <p className="text-sm text-foreground">
+                                  <span className="text-muted-foreground">
+                                    Description:{" "}
+                                  </span>
+                                  {stone.description}
                                 </p>
-                                {stone.description && (
-                                  <p className="text-sm text-foreground">
-                                    <span className="text-muted-foreground">
-                                      Description:{" "}
-                                    </span>
-                                    {stone.description}
-                                  </p>
-                                )}
-                                {stone.shape && (
-                                  <p className="text-sm text-foreground">
-                                    <span className="text-muted-foreground">
-                                      Shape:{" "}
-                                    </span>
-                                    {stone.shape}
-                                  </p>
-                                )}
-                                {stone.weight && (
-                                  <p className="text-sm text-foreground">
-                                    <span className="text-muted-foreground">
-                                      Weight:{" "}
-                                    </span>
-                                    {stone.weight}
-                                  </p>
-                                )}
-                              </div>
-                            ),
-                        )}
+                              )}
+                              {stone.shape && (
+                                <p className="text-sm text-foreground">
+                                  <span className="text-muted-foreground">
+                                    Shape:{" "}
+                                  </span>
+                                  {stone.shape}
+                                </p>
+                              )}
+                              {stone.weight && (
+                                <p className="text-sm text-foreground">
+                                  <span className="text-muted-foreground">
+                                    Weight:{" "}
+                                  </span>
+                                  {stone.weight}
+                                </p>
+                              )}
+                            </div>
+                          )
+                        ))}
                       </div>
                     </div>
                   )}
