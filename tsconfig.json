@@ -35,6 +35,7 @@
   "include": [
     "client/**/*",
     "server/**/*",
+    "server/@types/**/*",
     "shared/**/*",
     "vite.config.ts",
     "vite.config.server.ts"
