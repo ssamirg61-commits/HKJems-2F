@@ -35,7 +35,7 @@ function expressPlugin(): Plugin {
       // Only route API traffic through Express; let Vite handle the SPA and assets
       server.middlewares.use((req, res, next) => {
         if (req.url?.startsWith("/api")) {
-          return app(req, res, next);
+          return app(req as any, res as any, next);
         }
         return next();
       });

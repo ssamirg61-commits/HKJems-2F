@@ -19,10 +19,10 @@ export async function connectDB() {
   }
 
   try {
-    const options: mongoose.ConnectOptions & { serverSelectionTimeoutMS?: number } = {
+    const options: mongoose.ConnectOptions = {
       dbName,
       serverSelectionTimeoutMS: 10_000,
-    };
+    } as mongoose.ConnectOptions;
 
     await mongoose.connect(uri, options);
     isConnected = true;

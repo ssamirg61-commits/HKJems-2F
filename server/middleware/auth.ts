@@ -8,7 +8,7 @@ export function authenticateToken(
   next: NextFunction,
 ) {
   try {
-    const authHeader = req.headers.authorization;
+    const authHeader = req.get("authorization");
     const token = authHeader?.split(" ")[1]; // Bearer TOKEN
 
     if (!token) {
