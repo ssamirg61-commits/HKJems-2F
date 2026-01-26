@@ -1,5 +1,5 @@
 import "dotenv/config";
-import express from "express";
+import express, { ErrorRequestHandler, RequestHandler } from "express";
 import cors from "cors";
 import { connectDB } from "./db";
 import { handleDemo } from "./routes/demo";
@@ -120,15 +120,17 @@ export function createServer() {
   app.delete("/api/designs/:id", authenticateToken, deleteDesign);
 
   // Global error handler - always return JSON
-  app.use((err: any, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
+  const errorHandler: ErrorRequestHandler = (err, _req, res, _next) => {
     console.error("Unhandled error:", err);
     res.status(500).json({ error: err.message || "Internal server error" });
-  });
+  };
+  app.use(errorHandler);
 
   // 404 handler - always return JSON
-  app.use((_req, res) => {
+  const notFoundHandler: RequestHandler = (_req, res) => {
     res.status(404).json({ error: "Not found" });
-  });
+  };
+  app.use(notFoundHandler);
 
   return app;
 }
