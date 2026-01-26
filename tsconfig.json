@@ -30,11 +30,13 @@
     "paths": {
       "@/*": ["./client/*"],
       "@shared/*": ["./shared/*"]
-    }
+    },
+    "typeRoots": ["./node_modules/@types", "./server/types"]
   },
   "include": [
     "client/**/*",
     "server/**/*",
+    "server/types/**/*",
     "server/@types/**/*",
     "shared/**/*",
     "vite.config.ts",
