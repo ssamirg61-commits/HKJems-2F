@@ -48,7 +48,7 @@ const DesignSchema = new Schema<IDesign>(
     diamondShape: { type: String, required: true },
     caratWeight: { type: String, required: true },
     clarity: { type: String, required: true },
-    sideStones: { type: [SideStoneSchema], default: [] },
+    sideStones: [SideStoneSchema],
     marking: { type: String, default: "" },
     logoFileName: { type: String },
     logoData: { type: String },
