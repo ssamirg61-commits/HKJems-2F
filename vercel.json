@@ -1,8 +1,12 @@
 {
-  "buildCommand": "pnpm run build",
-  "outputDirectory": "dist/spa",
   "routes": [
-    { "src": "/assets/(.*)", "dest": "/assets/$1" },
-    { "src": "/(.*)", "dest": "/index.html" }
+    {
+      "src": "/api/(.*)",
+      "dest": "/api/$1"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/dist/spa/index.html"
+    }
   ]
 }

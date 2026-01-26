@@ -6,16 +6,16 @@ export const authMiddleware = (
   res: any,
   next: any
 ) => {
-  const token = req.get?.("authorization");
+  const token = req.headers.authorization;
 
   if (!token) {
-    return res.status(401).json({ message: "Unauthorized" });
+    return res.status(401).json({ success: false, message: "Unauthorized" });
   }
 
   req.userId = "temp";
   req.userRole = "admin";
 
-  next();
+  return next();
 };
 
 // Authentication middleware - verify JWT token
@@ -25,28 +25,25 @@ export function authenticateToken(
   next: any,
 ) {
   try {
-    const authHeader = req.get?.("authorization");
+    const authHeader = req.headers.authorization;
     const token = authHeader?.split(" ")[1]; // Bearer TOKEN
 
     if (!token) {
-      res.status(401).json({ error: "No token provided" });
-      return;
+      return res.status(401).json({ success: false, message: "No token provided" });
     }
 
     const verification = verifyToken(token);
 
     if (!verification.valid || !verification.data) {
-      res.status(401).json({ error: verification.error || "Invalid token" });
-      return;
+      return res.status(401).json({ success: false, message: verification.error || "Invalid token" });
     }
 
-    // Attach user info to request
     req.userId = verification.data.userId;
     req.userRole = verification.data.role;
 
-    next();
+    return next();
   } catch (error) {
-    res.status(401).json({ error: "Token verification failed" });
+    return res.status(500).json({ success: false, message: "Token verification failed" });
   }
 }
 
@@ -54,23 +51,21 @@ export function authenticateToken(
 export function authorizeRole(allowedRoles: string[]) {
   return (req: any, res: any, next: any) => {
     if (!req.userRole) {
-      res.status(401).json({ error: "User not authenticated" });
-      return;
+      return res.status(401).json({ success: false, message: "User not authenticated" });
     }
 
     if (!allowedRoles.includes(req.userRole)) {
-      res.status(403).json({ error: "Insufficient permissions" });
-      return;
+      return res.status(403).json({ success: false, message: "Insufficient permissions" });
     }
 
-    next();
+    return next();
   };
 }
 
 // Optional authentication middleware (for endpoints that can work with or without auth)
 export function optionalAuth(req: any, res: any, next: any) {
   try {
-    const authHeader = req.get?.("authorization");
+    const authHeader = req.headers.authorization;
     const token = authHeader?.split(" ")[1];
 
     if (token) {
@@ -82,9 +77,8 @@ export function optionalAuth(req: any, res: any, next: any) {
       }
     }
 
-    next();
+    return next();
   } catch (error) {
-    // Continue without auth on error
-    next();
+    return next();
   }
-};
+}

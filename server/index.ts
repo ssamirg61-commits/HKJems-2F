@@ -31,20 +31,21 @@ let dbInitialized = false;
 
 async function ensureDBInitialized() {
   if (!dbInitialized) {
-    try {
-      await connectDB();
-      await initializeDefaultAdmin();
-      dbInitialized = true;
-    } catch (err) {
-      console.error("Database initialization failed", err);
-    }
+    await connectDB();
+    await initializeDefaultAdmin();
+    dbInitialized = true;
   }
 }
 
 // Middleware to ensure DB is initialized before handling requests
-export const dbMiddleware: express.RequestHandler = async (_req, _res, next) => {
-  await ensureDBInitialized();
-  next();
+export const dbMiddleware: express.RequestHandler = async (_req, res, next) => {
+  try {
+    await ensureDBInitialized();
+    next();
+  } catch (err) {
+    console.error("Database initialization failed", err);
+    res.status(500).json({ error: "Database connection failed" });
+  }
 };
 
 export function createServer() {
@@ -117,6 +118,17 @@ export function createServer() {
   app.post("/api/designs", authenticateToken, createDesign);
   app.put("/api/designs/:id", authenticateToken, updateDesign);
   app.delete("/api/designs/:id", authenticateToken, deleteDesign);
+
+  // Global error handler - always return JSON
+  app.use((err: any, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
+    console.error("Unhandled error:", err);
+    res.status(500).json({ error: err.message || "Internal server error" });
+  });
+
+  // 404 handler - always return JSON
+  app.use((_req, res) => {
+    res.status(404).json({ error: "Not found" });
+  });
 
   return app;
 }
