@@ -1,12 +1,13 @@
-import { Request, Response, NextFunction } from "express";
+import { Request, Response, NextFunction, RequestHandler } from "express";
+import type {} from "../types/express";
 import { verifyToken } from "../utils/auth";
 
 // Authentication middleware - verify JWT token
-export function authenticateToken(
+export const authenticateToken: RequestHandler = (
   req: Request,
   res: Response,
   next: NextFunction,
-) {
+) => {
   try {
     const authHeader = req.headers.authorization;
     const token = authHeader?.split(" ")[1]; // Bearer TOKEN
@@ -31,10 +32,10 @@ export function authenticateToken(
   } catch (error) {
     res.status(401).json({ error: "Token verification failed" });
   }
-}
+};
 
 // Authorization middleware - check user role
-export function authorizeRole(allowedRoles: ("USER" | "ADMIN")[]) {
+export function authorizeRole(allowedRoles: ("USER" | "ADMIN")[]): RequestHandler {
   return (req: Request, res: Response, next: NextFunction) => {
     if (!req.userRole) {
       res.status(401).json({ error: "User not authenticated" });
@@ -51,7 +52,11 @@ export function authorizeRole(allowedRoles: ("USER" | "ADMIN")[]) {
 }
 
 // Optional authentication middleware (for endpoints that can work with or without auth)
-export function optionalAuth(req: Request, res: Response, next: NextFunction) {
+export const optionalAuth: RequestHandler = (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
   try {
     const authHeader = req.headers.authorization;
     const token = authHeader?.split(" ")[1];
@@ -70,4 +75,4 @@ export function optionalAuth(req: Request, res: Response, next: NextFunction) {
     // Continue without auth on error
     next();
   }
-}
+};

@@ -42,11 +42,7 @@ async function ensureDBInitialized() {
 }
 
 // Middleware to ensure DB is initialized before handling requests
-export const dbMiddleware = async (
-  _req: express.Request,
-  _res: express.Response,
-  next: express.NextFunction,
-) => {
+export const dbMiddleware: express.RequestHandler = async (_req, _res, next) => {
   await ensureDBInitialized();
   next();
 };
