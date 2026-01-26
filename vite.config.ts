@@ -9,7 +9,7 @@ export default defineConfig(({ mode }) => ({
     host: "::",
     port: 8080,
     fs: {
-      allow: ["./client", "./shared"],
+      allow: [".", "./client", "./shared"],
       deny: [".env", ".env.*", "*.{crt,pem}", "**/.git/**", "server/**"],
     },
   },
@@ -32,8 +32,13 @@ function expressPlugin(): Plugin {
     configureServer(server) {
       const app = createServer();
 
-      // Add Express app as middleware to Vite dev server
-      server.middlewares.use(app);
+      // Only route API traffic through Express; let Vite handle the SPA and assets
+      server.middlewares.use((req, res, next) => {
+        if (req.url?.startsWith("/api")) {
+          return app(req, res, next);
+        }
+        return next();
+      });
     },
   };
 }
