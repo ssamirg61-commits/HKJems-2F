@@ -24,8 +24,8 @@ export function authenticateToken(
     }
 
     // Attach user info to request
-    req.userId = verification.data.userId;
-    req.userRole = verification.data.role as "USER" | "ADMIN";
+    (req as any).userId = verification.data.userId;
+    (req as any).userRole = verification.data.role as "USER" | "ADMIN";
 
     next();
   } catch (error) {
@@ -36,12 +36,12 @@ export function authenticateToken(
 // Authorization middleware - check user role
 export function authorizeRole(allowedRoles: ("USER" | "ADMIN")[]) {
   return (req: Request, res: Response, next: NextFunction) => {
-    if (!req.userRole) {
+    if (!(req as any).userRole) {
       res.status(401).json({ error: "User not authenticated" });
       return;
     }
 
-    if (!allowedRoles.includes(req.userRole)) {
+    if (!allowedRoles.includes((req as any).userRole)) {
       res.status(403).json({ error: "Insufficient permissions" });
       return;
     }
@@ -60,8 +60,8 @@ export function optionalAuth(req: Request, res: Response, next: NextFunction) {
       const verification = verifyToken(token);
 
       if (verification.valid && verification.data) {
-        req.userId = verification.data.userId;
-        req.userRole = verification.data.role as "USER" | "ADMIN";
+        (req as any).userId = verification.data.userId;
+        (req as any).userRole = verification.data.role as "USER" | "ADMIN";
       }
     }
 

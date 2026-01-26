@@ -3,6 +3,9 @@ import path from "path";
 
 // Server build configuration
 export default defineConfig({
+  esbuild: {
+    logOverride: { "this-is-undefined-in-esm": "silent" }
+  },
   build: {
     lib: {
       entry: path.resolve(__dirname, "server/node-build.ts"),
@@ -39,7 +42,7 @@ export default defineConfig({
       },
     },
     minify: false, // Keep readable for debugging
-    sourcemap: true,
+    sourcemap: false,
   },
   resolve: {
     alias: {
