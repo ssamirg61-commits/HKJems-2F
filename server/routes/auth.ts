@@ -120,7 +120,7 @@ export const login: RequestHandler = async (req, res) => {
 // Get current user
 export const getCurrentUser: RequestHandler = async (req, res) => {
   try {
-    const userId = (req as any).userId;
+    const userId = req.userId;
 
     const user = await UserModel.findById(userId).lean();
 
@@ -145,7 +145,7 @@ export const getCurrentUser: RequestHandler = async (req, res) => {
 export const changePassword: RequestHandler = async (req, res) => {
   try {
     const { currentPassword, newPassword } = req.body;
-    const userId = (req as any).userId;
+    const userId = req.userId;
 
     if (!currentPassword || !newPassword) {
       res
@@ -263,7 +263,7 @@ export const resetPassword: RequestHandler = async (req, res) => {
 // Admin: Get all users
 export const getAllUsers: RequestHandler = async (req, res) => {
   try {
-    const role = (req as any).userRole;
+    const role = req.userRole;
 
     if (role !== "ADMIN") {
       res.status(403).json({ error: "Unauthorized" });
@@ -295,7 +295,7 @@ export const updateUser: RequestHandler = async (req, res) => {
   try {
     const { userId } = req.params;
     const { name, email, phone, isActive } = req.body;
-    const requesterRole = (req as any).userRole;
+    const requesterRole = req.userRole;
 
     if (requesterRole !== "ADMIN") {
       res.status(403).json({ error: "Unauthorized" });
@@ -341,7 +341,7 @@ export const updateUser: RequestHandler = async (req, res) => {
 // Admin: Create user
 export const createUser: RequestHandler = async (req, res) => {
   try {
-    const requesterRole = (req as any).userRole;
+    const requesterRole = req.userRole;
 
     if (requesterRole !== "ADMIN") {
       res.status(403).json({ error: "Unauthorized" });
@@ -400,7 +400,7 @@ export const createUser: RequestHandler = async (req, res) => {
 export const deleteUser: RequestHandler = async (req, res) => {
   try {
     const { userId } = req.params;
-    const requesterRole = (req as any).userRole;
+    const requesterRole = req.userRole;
 
     if (requesterRole !== "ADMIN") {
       res.status(403).json({ error: "Unauthorized" });

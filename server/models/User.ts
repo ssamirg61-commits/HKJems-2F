@@ -34,5 +34,7 @@ const UserSchema = new Schema<IUser>(
   },
 );
 
-export const UserModel =
-  mongoose.models.User || mongoose.model<IUser>("User", UserSchema);
+// Force a single well-typed model instance to avoid mongoose v8 union overload issues
+export const UserModel: mongoose.Model<IUser> =
+  (mongoose.models.User as mongoose.Model<IUser> | undefined) ||
+  mongoose.model<IUser>("User", UserSchema);

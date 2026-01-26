@@ -68,5 +68,7 @@ const DesignSchema = new Schema<IDesign>(
   },
 );
 
-export const DesignModel =
-  mongoose.models.Design || mongoose.model<IDesign>("Design", DesignSchema);
+// Force a single well-typed model instance to avoid mongoose v8 union overload issues
+export const DesignModel: mongoose.Model<IDesign> =
+  (mongoose.models.Design as mongoose.Model<IDesign> | undefined) ||
+  mongoose.model<IDesign>("Design", DesignSchema);

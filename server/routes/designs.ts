@@ -115,8 +115,8 @@ function validateFormData(formData: Record<string, any>): {
 
 export const getDesigns: RequestHandler = async (req, res) => {
   try {
-    const userId = (req as any).userId;
-    const userRole = (req as any).userRole;
+    const userId = req.userId;
+    const userRole = req.userRole;
 
     const query = userRole === "USER" ? { userId } : {};
     const designs = await DesignModel.find(query).lean();
@@ -138,7 +138,7 @@ export const getDesigns: RequestHandler = async (req, res) => {
 
 export const createDesign: RequestHandler = async (req, res) => {
   try {
-    const userId = (req as any).userId;
+    const userId = req.userId;
 
     if (!userId) {
       res.status(401).json({ error: "Authentication required" });
@@ -246,8 +246,8 @@ export const createDesign: RequestHandler = async (req, res) => {
 export const updateDesign: RequestHandler = async (req, res) => {
   try {
     const { id } = req.params;
-    const userId = (req as any).userId;
-    const userRole = (req as any).userRole;
+    const userId = req.userId;
+    const userRole = req.userRole;
 
     const design = await DesignModel.findById(id);
     if (!design) {

@@ -1,16 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import { verifyToken } from "../utils/auth";
 
-// Extend Express Request to include user info
-declare global {
-  namespace Express {
-    interface Request {
-      userId?: string;
-      userRole?: "USER" | "ADMIN";
-    }
-  }
-}
-
 // Authentication middleware - verify JWT token
 export function authenticateToken(
   req: Request,
@@ -18,8 +8,8 @@ export function authenticateToken(
   next: NextFunction,
 ) {
   try {
-    const authHeader = req.headers["authorization"];
-    const token = authHeader && authHeader.split(" ")[1]; // Bearer TOKEN
+    const authHeader = req.headers.authorization;
+    const token = authHeader?.split(" ")[1]; // Bearer TOKEN
 
     if (!token) {
       res.status(401).json({ error: "No token provided" });
@@ -63,8 +53,8 @@ export function authorizeRole(allowedRoles: ("USER" | "ADMIN")[]) {
 // Optional authentication middleware (for endpoints that can work with or without auth)
 export function optionalAuth(req: Request, res: Response, next: NextFunction) {
   try {
-    const authHeader = req.headers["authorization"];
-    const token = authHeader && authHeader.split(" ")[1];
+    const authHeader = req.headers.authorization;
+    const token = authHeader?.split(" ")[1];
 
     if (token) {
       const verification = verifyToken(token);
